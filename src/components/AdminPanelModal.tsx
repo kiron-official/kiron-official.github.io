@@ -49,7 +49,7 @@ function AdminThumb({ src, alt }: { src?: string; alt: string }) {
     <img
       src={url}
       alt={alt}
-      className="w-12 h-12 rounded-lg object-cover border border-[#CBE5DC] shrink-0"
+      className="w-12 h-12 rounded-lg object-contain bg-[#F2F8F6] border border-[#CBE5DC] shrink-0"
     />
   );
 }
@@ -78,6 +78,7 @@ export function AdminPanelModal({
   const [pCat, setPCat] = useState<PostCategory>('Update');
   const [pBody, setPBody] = useState('');
   const [pImgUrl, setPImgUrl] = useState('');
+  const [pVideoUrl, setPVideoUrl] = useState('');
   const [pFile, setPFile] = useState<File | null>(null);
   const [pVideoFile, setPVideoFile] = useState<File | null>(null);
   const pFileRef = useRef<HTMLInputElement>(null);
@@ -260,13 +261,14 @@ export function AdminPanelModal({
     const title = pTitle.trim();
     const body = pBody.trim();
     const imgUrl = pImgUrl.trim();
-    if (!title && !body && !pFile && !pVideoFile && !imgUrl) {
+    const videoUrlInput = pVideoUrl.trim();
+    if (!title && !body && !pFile && !pVideoFile && !imgUrl && !videoUrlInput) {
       notify('Please enter text or choose a photo/video.', true);
       return;
     }
-    if (pVideoFile && pVideoFile.size > MAX_FIRESTORE_BINARY_BYTES) {
+    if (!videoUrlInput && pVideoFile && pVideoFile.size > MAX_FIRESTORE_BINARY_BYTES) {
       notify(
-        `Video file is ${fmtSize(pVideoFile.size)}. Direct cloud sync supports videos up to 500 KB—paste a YouTube or video URL in the Videos tab for larger clips.`,
+        `Video file is ${fmtSize(pVideoFile.size)}. Direct file upload supports clips up to 500 KB—upload HD/long videos to YouTube or Google Drive and paste the link above.`,
         true
       );
       return;
@@ -283,18 +285,18 @@ export function AdminPanelModal({
         }
       }
 
-      let videoUrl = '';
-      if (pVideoFile) {
+      let videoUrl = videoUrlInput;
+      if (!videoUrl && pVideoFile) {
         videoUrl = await readDataUrl(pVideoFile);
-        if (!videoUrl || videoUrl.length > 740000) {
-          notify('Selected video exceeds live sync size limit. Use a YouTube/video URL instead.', true);
-          return;
-        }
+      }
+      if (videoUrl && videoUrl.length > 740000) {
+        notify('Selected video exceeds live sync size limit. Use a YouTube/Google Drive/HD video URL instead.', true);
+        return;
       }
 
-      const fallbackTitle = pVideoFile
+      const fallbackTitle = videoUrl
         ? 'New Video Post'
-        : pCat === 'Photo' || pFile
+        : pCat === 'Photo' || pFile || img
           ? 'New Photo Post'
           : 'New Update';
 
@@ -311,6 +313,7 @@ export function AdminPanelModal({
       setPTitle('');
       setPBody('');
       setPImgUrl('');
+      setPVideoUrl('');
       setPFile(null);
       setPVideoFile(null);
       if (pFileRef.current) pFileRef.current.value = '';
@@ -590,6 +593,7 @@ export function AdminPanelModal({
           tiktok: socialsInput.tiktok.trim(),
           telegram: socialsInput.telegram.trim(),
           wechat: socialsInput.wechat.trim(),
+          youtube: (socialsInput.youtube || '').trim(),
         },
       });
       notify('Social links synced live!');
@@ -905,6 +909,15 @@ export function AdminPanelModal({
                   placeholder="Image URL (optional)"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
+                <input
+                  value={pVideoUrl}
+                  onChange={(e) => setPVideoUrl(e.target.value)}
+                  placeholder="HD Video URL — YouTube, Google Drive, Vimeo, or .mp4 (optional)"
+                  className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
+                />
+                <p className="text-[11px] text-[#4A6B7A]">
+                  Tip: For HD or large videos, upload to YouTube or Google Drive (set access to &ldquo;Anyone with the link&rdquo;) and paste the link above.
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <label className="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-[#059669] bg-[#F4FBF8] text-[#047857] text-xs font-bold hover:bg-[#E6F6F0] cursor-pointer">
                     <span>
@@ -1093,9 +1106,12 @@ export function AdminPanelModal({
                 <input
                   value={vUrl}
                   onChange={(e) => setVUrl(e.target.value)}
-                  placeholder="Paste YouTube / Shorts / Direct Video URL (Recommended)"
+                  placeholder="Paste YouTube / Google Drive / Vimeo / HD .mp4 URL (Recommended)"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
+                <p className="text-[11px] text-[#4A6B7A]">
+                  Supports HD videos via YouTube, Google Drive (&ldquo;Anyone with the link&rdquo;), Vimeo, or direct .mp4 links.
+                </p>
                 <label className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-[#0284C7] bg-[#F0F9FF] text-[#0369A1] text-xs font-bold hover:bg-[#E0F2FE] cursor-pointer">
                   <span>
                     {vFile
@@ -1470,6 +1486,19 @@ export function AdminPanelModal({
                   onChange={(e) =>
                     setSocialsInput((s) => ({ ...s, telegram: e.target.value }))
                   }
+                  className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">
+                  YouTube
+                </label>
+                <input
+                  value={socialsInput.youtube || ''}
+                  onChange={(e) =>
+                    setSocialsInput((s) => ({ ...s, youtube: e.target.value }))
+                  }
+                  placeholder="https://www.youtube.com/@yourchannel"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
               </div>

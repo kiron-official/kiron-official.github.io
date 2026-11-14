@@ -59,6 +59,7 @@ export interface SocialLinks {
   tiktok: string;
   telegram: string;
   wechat: string;
+  youtube: string;
 }
 
 export interface PortalState {
@@ -86,6 +87,7 @@ export const DEFAULT_SOCIALS: SocialLinks = {
   tiktok: 'https://www.tiktok.com',
   telegram: 'https://telegram.org',
   wechat: 'https://www.wechat.com',
+  youtube: 'https://www.youtube.com',
 };
 
 export const SERIAL_TABS: { id: MainTabId; label: string; nav: string }[] = [

@@ -197,6 +197,10 @@ export function subscribePublicSiteProfile(
             typeof d.socials?.wechat === 'string'
               ? d.socials.wechat
               : DEFAULT_SOCIALS.wechat,
+          youtube:
+            typeof d.socials?.youtube === 'string'
+              ? d.socials.youtube
+              : DEFAULT_SOCIALS.youtube,
         },
       });
     },
@@ -225,6 +229,7 @@ export async function savePublicSiteProfile(
         tiktok: (profile.socials.tiktok || '').slice(0, 500),
         telegram: (profile.socials.telegram || '').slice(0, 500),
         wechat: (profile.socials.wechat || '').slice(0, 500),
+        youtube: (profile.socials.youtube || '').slice(0, 500),
       },
       authProof,
       updatedAt: serverTimestamp(),

@@ -56,7 +56,7 @@ function ResolvedImage({
 function ResolvedVideoPlayer({
   url,
   title,
-  className = 'w-full h-full object-cover',
+  className = 'w-full h-full object-contain bg-black',
 }: {
   url: string;
   title: string;
@@ -74,6 +74,7 @@ function ResolvedVideoPlayer({
       <iframe
         src={yt}
         title={title}
+        allow="autoplay; fullscreen; picture-in-picture"
         allowFullScreen
         className="w-full h-full border-0"
       />
@@ -347,6 +348,12 @@ export default function App() {
       isWeChat: false,
     },
     {
+      name: 'YouTube',
+      url: (state.socials.youtube || '').trim(),
+      cls: 'border-[#FCA5A5] bg-[#FEF2F2] text-[#DC2626] hover:bg-[#FEE2E2]',
+      isWeChat: false,
+    },
+    {
       name: 'WeChat',
       url: state.socials.wechat.trim(),
       cls: 'border-[#6EE7B7] bg-[#ECFDF5] text-[#047857] hover:bg-[#D1FAE5]',
@@ -551,12 +558,12 @@ export default function App() {
                             <button
                               type="button"
                               onClick={() => openSingleLightbox(idx)}
-                              className="block w-full overflow-hidden group cursor-pointer shrink-0"
+                              className="block w-full bg-[#EFF7F5] overflow-hidden group cursor-pointer shrink-0"
                             >
                               <ResolvedImage
                                 src={p.img}
                                 alt={p.title}
-                                className="w-full h-44 object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                                className="w-full h-48 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]"
                               />
                             </button>
                           )}
@@ -735,12 +742,12 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => openGalleryLightbox(i)}
-                          className="block w-full overflow-hidden cursor-pointer shrink-0"
+                          className="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer shrink-0"
                         >
                           <ResolvedImage
                             src={g.img}
                             alt={g.cap || 'Photo'}
-                            className="w-full h-48 object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                            className="w-full h-52 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]"
                           />
                         </button>
                         {(g.cap || isAuthenticated) && (

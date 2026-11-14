@@ -26,7 +26,7 @@ export function formatWa(val: string): string {
 
 export function ytEmbed(url: string): string | null {
   try {
-    const u = new URL(url);
+    const u = new URL(url.trim());
     if (u.hostname.includes('youtu.be')) {
       const id = u.pathname.replace('/', '').trim();
       return id ? `https://www.youtube.com/embed/${id}` : null;
@@ -36,9 +36,22 @@ export function ytEmbed(url: string): string | null {
         const id = u.pathname.split('/shorts/')[1]?.split('/')[0];
         return id ? `https://www.youtube.com/embed/${id}` : null;
       }
+      if (u.pathname.startsWith('/live/')) {
+        const id = u.pathname.split('/live/')[1]?.split('/')[0];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
       if (u.pathname.startsWith('/embed/')) return url;
       const id = u.searchParams.get('v');
       return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (u.hostname.includes('drive.google.com')) {
+      const match = u.pathname.match(/\/file\/d\/([^/]+)/);
+      const id = match?.[1] || u.searchParams.get('id');
+      return id ? `https://drive.google.com/file/d/${id}/preview` : null;
+    }
+    if (u.hostname.includes('vimeo.com')) {
+      const match = u.pathname.match(/\/(\d+)/);
+      return match?.[1] ? `https://player.vimeo.com/video/${match[1]}` : null;
     }
   } catch {
     return null;
@@ -87,6 +100,7 @@ export function loadState(): PortalState {
         tiktok: raw.socials?.tiktok ?? DEFAULT_SOCIALS.tiktok,
         telegram: raw.socials?.telegram ?? DEFAULT_SOCIALS.telegram,
         wechat: raw.socials?.wechat ?? DEFAULT_SOCIALS.wechat,
+        youtube: raw.socials?.youtube ?? DEFAULT_SOCIALS.youtube,
       },
       posts: Array.isArray(raw.posts) ? raw.posts : [],
       photos: Array.isArray(raw.photos) ? raw.photos : [],
@@ -289,7 +303,8 @@ export function generateStandaloneHtml(state: PortalState): string {
             whatsapp: raw.socials?.whatsapp ?? BAKED_INITIAL_STATE.socials.whatsapp,
             tiktok: raw.socials?.tiktok ?? BAKED_INITIAL_STATE.socials.tiktok,
             telegram: raw.socials?.telegram ?? BAKED_INITIAL_STATE.socials.telegram,
-            wechat: raw.socials?.wechat ?? BAKED_INITIAL_STATE.socials.wechat
+            wechat: raw.socials?.wechat ?? BAKED_INITIAL_STATE.socials.wechat,
+            youtube: raw.socials?.youtube ?? BAKED_INITIAL_STATE.socials.youtube
           },
           posts: Array.isArray(raw.posts) ? raw.posts : BAKED_INITIAL_STATE.posts,
           photos: Array.isArray(raw.photos) ? raw.photos : BAKED_INITIAL_STATE.photos,
@@ -319,6 +334,7 @@ export function generateStandaloneHtml(state: PortalState): string {
         { name: 'WhatsApp', url: formatWa(state.socials.whatsapp), cls: 'border-[#86EFAC] bg-[#ECFDF5] text-[#047857] hover:bg-[#D1FAE5]' },
         { name: 'TikTok', url: state.socials.tiktok.trim(), cls: 'border-[#99D6C9] bg-[#F0FDFA] text-[#0F766E] hover:bg-[#CCFBF1]' },
         { name: 'Telegram', url: state.socials.telegram.trim(), cls: 'border-[#7DD3FC] bg-[#F0F9FF] text-[#0284C7] hover:bg-[#E0F2FE]' },
+        { name: 'YouTube', url: (state.socials.youtube || '').trim(), cls: 'border-[#FCA5A5] bg-[#FEF2F2] text-[#DC2626] hover:bg-[#FEE2E2]' },
         { name: 'WeChat', url: state.socials.wechat.trim(), cls: 'border-[#6EE7B7] bg-[#ECFDF5] text-[#047857] hover:bg-[#D1FAE5]', isWeChat: true }
       ].filter((x) => x.url);
       if (!items.length) { wrap.classList.add('hidden'); return; }
@@ -333,7 +349,7 @@ export function generateStandaloneHtml(state: PortalState): string {
       return '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">' + state.posts.map((p, idx) => {
         const cmts = p.comments || []; const isOpen = !!openComments[p.id];
         return '<article class="bg-white border border-[#A7DFD2] rounded-2xl overflow-hidden flex flex-col">' +
-          (p.img ? '<button type="button" onclick="openSingleLightbox(' + idx + ')" class="block w-full overflow-hidden group cursor-pointer shrink-0"><img src="' + p.img + '" alt="' + esc(p.title) + '" class="w-full h-44 object-cover transition-transform duration-200 group-hover:scale-[1.03]" /></button>' : '') +
+          (p.img ? '<button type="button" onclick="openSingleLightbox(' + idx + ')" class="block w-full bg-[#EFF7F5] overflow-hidden group cursor-pointer shrink-0"><img src="' + p.img + '" alt="' + esc(p.title) + '" class="w-full h-48 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' : '') +
           '<div class="p-4 flex-1 flex flex-col"><div class="flex items-center gap-1.5 text-[11px] font-semibold text-[#059669] mb-1.5"><span>' + esc(p.cat || 'Update') + '</span>' + (p.createdAt ? '<span class="text-[#8EB9AD]">&middot;</span><span class="text-[#0369A1] font-medium">' + esc(p.createdAt) + '</span>' : '') + '</div>' +
           '<h3 class="text-base font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1.5">' + esc(p.title) + '</h3>' +
           '<p class="text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line line-clamp-3 mb-3">' + esc(p.body) + '</p>' +
@@ -344,13 +360,13 @@ export function generateStandaloneHtml(state: PortalState): string {
     }
     function renderPhotos() {
       if (!state.photos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No photos added yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-2xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-56 object-cover transition-transform duration-200 group-hover:scale-[1.03]" /></button>' + (g.cap ? '<figcaption class="px-4 py-3 text-sm text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-2xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-52 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-4 py-3 text-sm text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
     }
     function renderVideos() {
       if (!state.videos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No videos added yet.</p></div>';
       return '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">' + state.videos.map((v) => {
         const yt = ytEmbed(v.url); const direct = v.url.startsWith('data:video/') || /\\.(mp4|webm|ogg)(\\?|$)/i.test(v.url);
-        const media = yt ? '<iframe src="' + esc(yt) + '" title="' + esc(v.title) + '" allowfullscreen class="w-full h-full border-0"></iframe>' : direct ? '<video src="' + v.url + '" controls preload="metadata" class="w-full h-full object-cover"></video>' : '<div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0F2937] to-[#0369A1] p-6"><a href="' + esc(v.url) + '" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg bg-[#059669] text-white text-xs font-semibold">Watch Video</a></div>';
+        const media = yt ? '<iframe src="' + esc(yt) + '" title="' + esc(v.title) + '" allowfullscreen class="w-full h-full border-0"></iframe>' : direct ? '<video src="' + v.url + '" controls preload="metadata" class="w-full h-full object-contain bg-black"></video>' : '<div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0F2937] to-[#0369A1] p-6"><a href="' + esc(v.url) + '" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg bg-[#059669] text-white text-xs font-semibold">Watch Video</a></div>';
         return '<article class="bg-white border border-[#9FD0EC] rounded-2xl overflow-hidden"><div class="aspect-video bg-[#0F2937]">' + media + '</div><div class="p-5">' + (v.createdAt ? '<div class="text-xs font-semibold text-[#0284C7] mb-1.5">' + esc(v.createdAt) + '</div>' : '') + '<h3 class="text-lg font-bold text-[#0F2937]">' + esc(v.title) + '</h3>' + (v.description ? '<p class="mt-2 text-sm text-[#335160]">' + esc(v.description) + '</p>' : '') + '</div></article>';
       }).join('') + '</div>';
     }
@@ -415,7 +431,7 @@ export function generateStandaloneHtml(state: PortalState): string {
       } else if (adminTab === 'apk') {
         body.innerHTML = '<form onsubmit="addApk(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#0284C7]">APK Manager</h4><div class="grid grid-cols-2 gap-3"><input id="aName" placeholder="App Name" class="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="aVer" value="1.0" placeholder="Version" class="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><input id="aUrl" placeholder="APK Download URL" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="aFile" type="file" accept=".apk,application/vnd.android.package-archive" class="block text-xs" /><textarea id="aDesc" rows="2" placeholder="Description (Optional)" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"></textarea><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Add APK</button></form><div class="pt-4 border-t border-[#DCEFE9] space-y-2">' + state.apks.map((a) => '<div class="py-2 flex items-center justify-between border-b border-[#E2F2EC]"><span class="text-sm font-semibold">' + esc(a.name) + ' v' + esc(a.version) + '</span><button type="button" onclick="delApk(\\'' + esc(a.id) + '\\')" class="px-2.5 py-1 rounded bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete</button></div>').join('') + '</div>';
       } else {
-        body.innerHTML = '<form onsubmit="saveSocials(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#059669]">Social Links</h4><div><label class="block text-xs font-semibold mb-1">Facebook</label><input id="sFb" value="' + esc(state.socials.facebook) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WhatsApp (URL or phone number)</label><input id="sWa" value="' + esc(state.socials.whatsapp) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">TikTok</label><input id="sTt" value="' + esc(state.socials.tiktok) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">Telegram</label><input id="sTg" value="' + esc(state.socials.telegram) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WeChat (URL or WeChat ID)</label><input id="sWc" value="' + esc(state.socials.wechat) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Save Social Links</button></form>';
+        body.innerHTML = '<form onsubmit="saveSocials(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#059669]">Social Links</h4><div><label class="block text-xs font-semibold mb-1">Facebook</label><input id="sFb" value="' + esc(state.socials.facebook) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WhatsApp (URL or phone number)</label><input id="sWa" value="' + esc(state.socials.whatsapp) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">TikTok</label><input id="sTt" value="' + esc(state.socials.tiktok) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">Telegram</label><input id="sTg" value="' + esc(state.socials.telegram) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">YouTube</label><input id="sYt" value="' + esc(state.socials.youtube || '') + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WeChat (URL or WeChat ID)</label><input id="sWc" value="' + esc(state.socials.wechat) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Save Social Links</button></form>';
       }
     }
     async function uploadAvatar(e) { const f = e.target.files[0]; if (!f) return; state.avatar = await readDataUrl(f); save(); }
@@ -431,7 +447,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     function delPhoto(id) { state.photos = state.photos.filter((g) => g.id !== id); save(); }
     async function addApk(e) { e.preventDefault(); const name = document.getElementById('aName').value.trim(); const version = document.getElementById('aVer').value.trim() || '1.0'; const description = document.getElementById('aDesc').value.trim(); let downloadUrl = document.getElementById('aUrl').value.trim(); let fileName = '', sizeLabel = ''; const file = document.getElementById('aFile').files[0]; if (file) { downloadUrl = await readDataUrl(file); fileName = file.name; sizeLabel = fmtSize(file.size); } if (!downloadUrl) return; state.apks.unshift({ id: makeId('apk'), name: name || fileName.replace(/\\.apk$/i, '') || 'Android App', version, description, downloadUrl, fileName, sizeLabel, createdAt: monthYear() }); save(); }
     function delApk(id) { state.apks = state.apks.filter((a) => a.id !== id); save(); }
-    function saveSocials(e) { e.preventDefault(); state.socials = { facebook: document.getElementById('sFb').value.trim(), whatsapp: document.getElementById('sWa').value.trim(), tiktok: document.getElementById('sTt').value.trim(), telegram: document.getElementById('sTg').value.trim(), wechat: document.getElementById('sWc').value.trim() }; save(); }
+    function saveSocials(e) { e.preventDefault(); state.socials = { facebook: document.getElementById('sFb').value.trim(), whatsapp: document.getElementById('sWa').value.trim(), tiktok: document.getElementById('sTt').value.trim(), telegram: document.getElementById('sTg').value.trim(), youtube: document.getElementById('sYt').value.trim(), wechat: document.getElementById('sWc').value.trim() }; save(); }
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeLightbox(); closeLogin(); closeAdmin(); } else if (e.key === 'ArrowLeft') navLightbox(-1); else if (e.key === 'ArrowRight') navLightbox(1); });
     render();
   </script>

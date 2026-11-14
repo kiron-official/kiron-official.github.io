@@ -40,13 +40,14 @@ service cloud.firestore {
 
     function isValidSocials(s) {
       return s is map
-        && s.keys().hasAll(['facebook', 'whatsapp', 'tiktok', 'telegram', 'wechat'])
-        && s.keys().hasOnly(['facebook', 'whatsapp', 'tiktok', 'telegram', 'wechat'])
+        && s.keys().hasAll(['facebook', 'whatsapp', 'tiktok', 'telegram', 'wechat', 'youtube'])
+        && s.keys().hasOnly(['facebook', 'whatsapp', 'tiktok', 'telegram', 'wechat', 'youtube'])
         && s.facebook is string && s.facebook.size() <= 500
         && s.whatsapp is string && s.whatsapp.size() <= 500
         && s.tiktok is string && s.tiktok.size() <= 500
         && s.telegram is string && s.telegram.size() <= 500
-        && s.wechat is string && s.wechat.size() <= 500;
+        && s.wechat is string && s.wechat.size() <= 500
+        && s.youtube is string && s.youtube.size() <= 500;
     }
 
     function isValidSiteProfile(data) {

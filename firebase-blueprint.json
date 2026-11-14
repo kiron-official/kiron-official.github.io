@@ -29,9 +29,14 @@
           "type": "string",
           "maxLength": 500,
           "description": "WeChat link or ID"
+        },
+        "youtube": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "YouTube channel URL"
         }
       },
-      "required": ["facebook", "whatsapp", "tiktok", "telegram", "wechat"]
+      "required": ["facebook", "whatsapp", "tiktok", "telegram", "wechat", "youtube"]
     },
     "SiteProfile": {
       "title": "SiteProfile",

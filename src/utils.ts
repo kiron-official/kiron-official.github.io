@@ -9,11 +9,16 @@ export function makeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+export function formatEnglishPostDate(date: Date = new Date()): string {
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  return `${dd}.${mm}.${yyyy} - ${days[date.getDay()]}`;
+}
+
 export function monthYear(): string {
-  return new Date().toLocaleDateString('en-US', {
-    month: 'short',
-    year: 'numeric',
-  });
+  return formatEnglishPostDate();
 }
 
 export function formatWa(val: string): string {
@@ -369,7 +374,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} render(); }
     function esc(s) { return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
     function makeId(p) { return p + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7); }
-    function monthYear() { return new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); }
+    function monthYear() { const d = new Date(); const dd = String(d.getDate()).padStart(2, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0'); const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']; return dd + '.' + mm + '.' + d.getFullYear() + ' - ' + days[d.getDay()]; }
     function formatWa(val) { const t = String(val || '').trim(); if (!t) return ''; if (t.startsWith('http://') || t.startsWith('https://')) return t; const d = t.replace(/[^\\d]/g, ''); return d ? 'https://wa.me/' + d : t; }
     function ytEmbed(url) { try { const u = new URL(url); if (u.hostname.includes('youtu.be')) { const id = u.pathname.replace('/', '').trim(); return id ? 'https://www.youtube.com/embed/' + id : null; } if (u.hostname.includes('youtube.com')) { if (u.pathname.startsWith('/shorts/')) { const id = u.pathname.split('/shorts/')[1]?.split('/')[0]; return id ? 'https://www.youtube.com/embed/' + id : null; } if (u.pathname.startsWith('/embed/')) return url; const id = u.searchParams.get('v'); return id ? 'https://www.youtube.com/embed/' + id : null; } } catch {} return null; }
     function readDataUrl(f) { return new Promise((res) => { if (!f) return res(''); const r = new FileReader(); r.onload = () => res(typeof r.result === 'string' ? r.result : ''); r.onerror = () => res(''); r.readAsDataURL(f); }); }
@@ -395,41 +400,41 @@ export function generateStandaloneHtml(state: PortalState): string {
     }
     function renderPosts() {
       if (!state.posts.length) return '<div class="bg-white border border-[#B7DFD4] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No posts yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">' + state.posts.map((p, idx) => {
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">' + state.posts.map((p, idx) => {
         const cmts = p.comments || []; const isOpen = !!openComments[p.id];
-        return '<article class="bg-white border border-[#A7DFD2] rounded-2xl overflow-hidden flex flex-col">' +
-          (p.img ? '<button type="button" onclick="openSingleLightbox(' + idx + ')" class="block w-full bg-[#EFF7F5] overflow-hidden group cursor-pointer shrink-0"><img src="' + p.img + '" alt="' + esc(p.title) + '" class="w-full h-48 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' : '') +
-          '<div class="p-4 flex-1 flex flex-col"><div class="flex items-center gap-1.5 text-[11px] font-semibold text-[#059669] mb-1.5"><span>' + esc(p.cat || 'Update') + '</span>' + (p.createdAt ? '<span class="text-[#8EB9AD]">&middot;</span><span class="text-[#0369A1] font-medium">' + esc(p.createdAt) + '</span>' : '') + '</div>' +
-          '<h3 class="text-base font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1.5">' + esc(p.title) + '</h3>' +
-          '<p class="text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line line-clamp-3 mb-3">' + esc(p.body) + '</p>' +
-          '<div class="mt-auto pt-3 border-t border-[#E4F3EE]"><button type="button" onclick="toggleCmt(\\'' + esc(p.id) + '\\')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#93C5FD] bg-[#F0F9FF] text-[#0369A1] text-xs font-semibold hover:bg-[#E0F2FE] cursor-pointer">Comments (' + cmts.length + ')</button></div>' +
-          (isOpen ? '<div class="mt-3 pt-3 border-t border-[#E4F3EE] space-y-2">' + (cmts.length ? cmts.map((c) => '<div class="bg-[#F4FBF8] border border-[#CDECE2] rounded-xl px-3 py-2 text-xs"><div class="font-bold text-[#047857] text-[11px] mb-0.5">' + esc(c.author) + '</div><div class="text-[#0F2937]">' + esc(c.text) + '</div></div>').join('') : '<p class="text-xs text-[#5A7B8A]">No comments yet.</p>') + '<form onsubmit="addCmt(event, \\'' + esc(p.id) + '\\')" class="space-y-2 pt-1"><input id="ca-' + esc(p.id) + '" placeholder="Your name (optional)" class="w-full px-3 py-2 rounded-lg border border-[#BCE2D6] bg-white text-xs text-[#0F2937]" /><div class="flex gap-2"><input id="ct-' + esc(p.id) + '" placeholder="Write a comment..." class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#BCE2D6] bg-white text-xs text-[#0F2937]" /><button type="submit" class="px-3.5 py-2 rounded-lg bg-[#059669] text-white text-xs font-semibold hover:bg-[#047857] shrink-0 cursor-pointer">Send</button></div></form></div>' : '') +
+        return '<article class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden flex flex-col">' +
+          (p.img ? '<button type="button" onclick="openSingleLightbox(' + idx + ')" class="block w-full bg-[#EFF7F5] overflow-hidden group cursor-pointer shrink-0"><img src="' + p.img + '" alt="' + esc(p.title) + '" class="w-full h-36 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' : '') +
+          '<div class="p-3.5 flex-1 flex flex-col"><div class="flex flex-wrap items-center gap-1.5 text-[10.5px] font-semibold text-[#059669] mb-1"><span>' + esc(p.cat || 'Update') + '</span>' + (p.createdAt ? '<span class="text-[#8EB9AD]">&middot;</span><span class="text-[#0369A1] font-medium">' + esc(p.createdAt) + '</span>' : '') + '</div>' +
+          '<h3 class="text-sm font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1">' + esc(p.title) + '</h3>' +
+          '<p class="text-xs text-[#335160] leading-relaxed whitespace-pre-line line-clamp-2 mb-2.5">' + esc(p.body) + '</p>' +
+          '<div class="mt-auto pt-2.5 border-t border-[#E4F3EE]"><button type="button" onclick="toggleCmt(\\'' + esc(p.id) + '\\')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#93C5FD] bg-[#F0F9FF] text-[#0369A1] text-[11px] font-semibold hover:bg-[#E0F2FE] cursor-pointer">Comments (' + cmts.length + ')</button></div>' +
+          (isOpen ? '<div class="mt-2.5 pt-2.5 border-t border-[#E4F3EE] space-y-2">' + (cmts.length ? cmts.map((c) => '<div class="bg-[#F4FBF8] border border-[#CDECE2] rounded-xl px-2.5 py-1.5 text-xs"><div class="font-bold text-[#047857] text-[11px] mb-0.5">' + esc(c.author) + '</div><div class="text-[#0F2937]">' + esc(c.text) + '</div></div>').join('') : '<p class="text-xs text-[#5A7B8A]">No comments yet.</p>') + '<form onsubmit="addCmt(event, \\'' + esc(p.id) + '\\')" class="space-y-2 pt-1"><input id="ca-' + esc(p.id) + '" placeholder="Your name (optional)" class="w-full px-2.5 py-1.5 rounded-lg border border-[#BCE2D6] bg-white text-xs text-[#0F2937]" /><div class="flex gap-2"><input id="ct-' + esc(p.id) + '" placeholder="Write a comment..." class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#BCE2D6] bg-white text-xs text-[#0F2937]" /><button type="submit" class="px-3 py-1.5 rounded-lg bg-[#059669] text-white text-xs font-semibold hover:bg-[#047857] shrink-0 cursor-pointer">Send</button></div></form></div>' : '') +
           '</div></article>';
       }).join('') + '</div>';
     }
     function renderPhotos() {
       if (!state.photos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No photos added yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-2xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-52 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-4 py-3 text-sm text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-40 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-3.5 py-2.5 text-xs text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
     }
     function renderVideos() {
       if (!state.videos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No videos added yet.</p></div>';
-      return '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">' + state.videos.map((v) => {
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.videos.map((v) => {
         const yt = ytEmbed(v.url); const direct = v.url.startsWith('data:video/') || /\\.(mp4|webm|ogg)(\\?|$)/i.test(v.url);
         const media = yt ? '<iframe src="' + esc(yt) + '" title="' + esc(v.title) + '" allowfullscreen class="w-full h-full border-0"></iframe>' : direct ? '<video src="' + v.url + '" controls preload="metadata" class="w-full h-full object-contain bg-black"></video>' : '<div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0F2937] to-[#0369A1] p-6"><a href="' + esc(v.url) + '" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg bg-[#059669] text-white text-xs font-semibold">Watch Video</a></div>';
-        return '<article class="bg-white border border-[#9FD0EC] rounded-2xl overflow-hidden"><div class="aspect-video bg-[#0F2937]">' + media + '</div><div class="p-5">' + (v.createdAt ? '<div class="text-xs font-semibold text-[#0284C7] mb-1.5">' + esc(v.createdAt) + '</div>' : '') + '<h3 class="text-lg font-bold text-[#0F2937]">' + esc(v.title) + '</h3>' + (v.description ? '<p class="mt-2 text-sm text-[#335160]">' + esc(v.description) + '</p>' : '') + '</div></article>';
+        return '<article class="bg-white border border-[#9FD0EC] rounded-xl overflow-hidden"><div class="aspect-video bg-[#0F2937]">' + media + '</div><div class="p-3.5">' + (v.createdAt ? '<div class="text-[10.5px] font-semibold text-[#0284C7] mb-1">' + esc(v.createdAt) + '</div>' : '') + '<h3 class="text-sm font-bold text-[#0F2937]">' + esc(v.title) + '</h3>' + (v.description ? '<p class="mt-1 text-xs text-[#335160]">' + esc(v.description) + '</p>' : '') + '</div></article>';
       }).join('') + '</div>';
     }
     function renderApk() {
       if (!state.apks.length) return '<div class="bg-white border border-[#A7DFD2] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No APK files shared yet.</p></div>';
-      return '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">' + state.apks.map((a) => {
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.apks.map((a) => {
         const isData = a.downloadUrl.startsWith('data:');
-        return '<article class="bg-white border border-[#A7DFD2] rounded-2xl p-5 flex flex-col justify-between gap-4"><div><h3 class="text-base font-bold text-[#0F2937]">' + esc(a.name) + '</h3><div class="text-xs text-[#0369A1] font-medium mt-0.5">v' + esc(a.version) + (a.sizeLabel ? ' &middot; ' + esc(a.sizeLabel) : '') + '</div>' + (a.description ? '<p class="text-sm text-[#335160] mt-2">' + esc(a.description) + '</p>' : '') + '</div><a href="' + esc(a.downloadUrl) + '" ' + (isData ? 'download="' + esc(a.fileName || a.name + '.apk') + '"' : 'target="_blank" rel="noopener noreferrer"') + ' class="inline-flex items-center justify-center w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold">Download APK</a></article>';
+        return '<article class="bg-white border border-[#A7DFD2] rounded-xl p-3.5 flex flex-col justify-between gap-3"><div><h3 class="text-sm font-bold text-[#0F2937]">' + esc(a.name) + '</h3><div class="text-[11px] text-[#0369A1] font-medium mt-0.5">v' + esc(a.version) + (a.sizeLabel ? ' &middot; ' + esc(a.sizeLabel) : '') + (a.createdAt ? ' &middot; ' + esc(a.createdAt) : '') + '</div>' + (a.description ? '<p class="text-xs text-[#335160] mt-1.5">' + esc(a.description) + '</p>' : '') + '</div><a href="' + esc(a.downloadUrl) + '" ' + (isData ? 'download="' + esc(a.fileName || a.name + '.apk') + '"' : 'target="_blank" rel="noopener noreferrer"') + ' class="inline-flex items-center justify-center w-full px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold">Download APK</a></article>';
       }).join('') + '</div>';
     }
     function renderAnnouncements() {
       const list = state.posts.filter((p) => p.cat === 'Announcement');
       if (!list.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No announcements published yet.</p></div>';
-      return '<div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">' + list.map((item) => '<article class="bg-white border border-[#9FD0EC] rounded-2xl p-6"><div class="text-xs font-semibold text-[#0284C7] mb-2">Announcement' + (item.createdAt ? ' &middot; ' + esc(item.createdAt) : '') + '</div><h3 class="text-lg font-bold text-[#0F2937] mb-2">' + esc(item.title) + '</h3><p class="text-sm text-[#335160] leading-relaxed whitespace-pre-line">' + esc(item.body) + '</p></article>').join('') + '</div>';
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + list.map((item) => '<article class="bg-white border border-[#9FD0EC] rounded-xl p-3.5"><div class="text-[10.5px] font-semibold text-[#0284C7] mb-1">Announcement' + (item.createdAt ? ' &middot; ' + esc(item.createdAt) : '') + '</div><h3 class="text-sm font-bold text-[#0F2937] mb-1">' + esc(item.title) + '</h3><p class="text-xs text-[#335160] leading-relaxed whitespace-pre-line">' + esc(item.body) + '</p></article>').join('') + '</div>';
     }
     function render() {
       const av = document.getElementById('navAvatar');

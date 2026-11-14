@@ -25,6 +25,27 @@ import {
   SocialLinks,
   VideoItem,
 } from './types';
+import { formatEnglishPostDate } from './utils';
+
+function resolveEnglishDate(raw: unknown, serverTs: unknown): string {
+  const str = typeof raw === 'string' ? raw.trim() : '';
+  if (/^\d{2}\.\d{2}\.\d{4}\s-\s[A-Z]{3}$/.test(str)) {
+    return str;
+  }
+  if (
+    serverTs &&
+    typeof (serverTs as { toDate?: () => Date }).toDate === 'function'
+  ) {
+    try {
+      return formatEnglishPostDate(
+        (serverTs as { toDate: () => Date }).toDate()
+      );
+    } catch {
+      // Fall back to stored string
+    }
+  }
+  return str;
+}
 
 export const MAX_FIRESTORE_MEDIA_CHARS = 430000;
 export const MAX_FIRESTORE_BINARY_BYTES = 500 * 1024;
@@ -264,7 +285,7 @@ export function subscribePosts(
               typeof d.videoUrl === 'string' && d.videoUrl
                 ? d.videoUrl
                 : undefined,
-            createdAt: typeof d.createdAt === 'string' ? d.createdAt : '',
+            createdAt: resolveEnglishDate(d.createdAt, d.createdServerAt),
           };
         });
       onData(list);
@@ -468,7 +489,7 @@ export function subscribeVideos(
             url: typeof d.url === 'string' ? d.url : '',
             description:
               typeof d.description === 'string' ? d.description : '',
-            createdAt: typeof d.createdAt === 'string' ? d.createdAt : '',
+            createdAt: resolveEnglishDate(d.createdAt, d.createdServerAt),
           };
         });
       onData(list);
@@ -538,7 +559,7 @@ export function subscribeApks(
               typeof d.downloadUrl === 'string' ? d.downloadUrl : '',
             fileName: typeof d.fileName === 'string' ? d.fileName : '',
             sizeLabel: typeof d.sizeLabel === 'string' ? d.sizeLabel : '',
-            createdAt: typeof d.createdAt === 'string' ? d.createdAt : '',
+            createdAt: resolveEnglishDate(d.createdAt, d.createdServerAt),
           };
         });
       onData(list);

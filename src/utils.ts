@@ -197,7 +197,6 @@ export function generateStandaloneHtml(state: PortalState): string {
           <img id="heroAvatar" src="profile.jpg" alt="MD KIRON MONDAL" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg shrink-0" />
           <div>
             <h1 class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight">MD KIRON MONDAL</h1>
-            <p class="mt-0.5 text-sm font-semibold text-[#059669]">বাবুনির বাবু</p>
             <p id="heroBio" class="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line hidden"></p>
           </div>
         </div>

@@ -21,6 +21,8 @@ import {
   generateStandaloneHtml,
   makeId,
   monthYear,
+  normalizeApkDownloadUrl,
+  normalizeVideoUrl,
   readDataUrl,
 } from '../utils';
 
@@ -101,6 +103,7 @@ export function AdminPanelModal({
   const [aName, setAName] = useState('');
   const [aVer, setAVer] = useState('1.0');
   const [aUrl, setAUrl] = useState('');
+  const [aSize, setASize] = useState('');
   const [aDesc, setADesc] = useState('');
   const [aFile, setAFile] = useState<File | null>(null);
   const aFileRef = useRef<HTMLInputElement>(null);
@@ -285,7 +288,7 @@ export function AdminPanelModal({
         }
       }
 
-      let videoUrl = videoUrlInput;
+      let videoUrl = videoUrlInput ? normalizeVideoUrl(videoUrlInput) : '';
       if (!videoUrl && pVideoFile) {
         videoUrl = await readDataUrl(pVideoFile);
       }
@@ -365,14 +368,14 @@ export function AdminPanelModal({
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
-    let url = vUrl.trim();
+    let url = vUrl.trim() ? normalizeVideoUrl(vUrl.trim()) : '';
     if (!url && !vFile) {
-      notify('Please paste a YouTube/video URL or choose a small video clip.', true);
+      notify('Please paste a YouTube/Google Drive/GitHub Release video URL or choose a small clip.', true);
       return;
     }
     if (!url && vFile && vFile.size > MAX_FIRESTORE_BINARY_BYTES) {
       notify(
-        `Video file is ${fmtSize(vFile.size)}. Direct file upload supports up to 500 KB—paste a YouTube or video URL so all visitors can watch it smoothly.`,
+        `Video file is ${fmtSize(vFile.size)}. Direct file upload supports up to 500 KB—upload 500 MB / 30-min HD videos to YouTube, Google Drive, or GitHub Releases and paste the link above.`,
         true
       );
       return;
@@ -515,16 +518,16 @@ export function AdminPanelModal({
 
   const handleAddApk = async (e: React.FormEvent) => {
     e.preventDefault();
-    let downloadUrl = aUrl.trim();
+    let downloadUrl = aUrl.trim() ? normalizeApkDownloadUrl(aUrl.trim()) : '';
     let fileName = '';
-    let sizeLabel = '';
+    let sizeLabel = aSize.trim();
     if (!downloadUrl && !aFile) {
       notify('Please enter an APK URL or choose a small .apk file.', true);
       return;
     }
     if (!downloadUrl && aFile && aFile.size > MAX_FIRESTORE_BINARY_BYTES) {
       notify(
-        `APK file is ${fmtSize(aFile.size)}. Upload large APKs to GitHub Releases or Google Drive and paste the download link here so every visitor can download it.`,
+        `APK file is ${fmtSize(aFile.size)}. Upload large APKs (up to 500 MB – 2 GB) to GitHub Releases or Google Drive and paste the link above.`,
         true
       );
       return;
@@ -534,7 +537,7 @@ export function AdminPanelModal({
       if (!downloadUrl && aFile) {
         downloadUrl = await readDataUrl(aFile);
         fileName = aFile.name;
-        sizeLabel = fmtSize(aFile.size);
+        sizeLabel = sizeLabel || fmtSize(aFile.size);
       }
       if (!downloadUrl || downloadUrl.length > 740000) {
         notify('APK URL or file exceeds cloud limit. Paste a direct download URL instead.', true);
@@ -557,6 +560,7 @@ export function AdminPanelModal({
       setAName('');
       setAVer('1.0');
       setAUrl('');
+      setASize('');
       setADesc('');
       setAFile(null);
       if (aFileRef.current) aFileRef.current.value = '';
@@ -912,12 +916,40 @@ export function AdminPanelModal({
                 <input
                   value={pVideoUrl}
                   onChange={(e) => setPVideoUrl(e.target.value)}
-                  placeholder="HD Video URL — YouTube, Google Drive, Vimeo, or .mp4 (optional)"
+                  placeholder="HD Video URL (500 MB / 30m+) — YouTube, Google Drive, GitHub Release .mp4, Dropbox"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
-                <p className="text-[11px] text-[#4A6B7A]">
-                  Tip: For HD or large videos, upload to YouTube or Google Drive (set access to &ldquo;Anyone with the link&rdquo;) and paste the link above.
-                </p>
+                <div className="p-2.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1.5">
+                  <p className="text-[11px] text-[#0F2937] leading-relaxed">
+                    <strong>500 MB / 30+ min HD Video:</strong> Direct browser file upload is capped at 500 KB by Firebase Firestore. Upload your full HD video using any free host below and paste the link above:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href="https://studio.youtube.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#FCA5A5] text-[#DC2626] text-[11px] font-semibold hover:bg-[#FEF2F2]"
+                    >
+                      YouTube Studio (Unlimited HD)
+                    </a>
+                    <a
+                      href="https://drive.google.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#93C5FD] text-[#0369A1] text-[11px] font-semibold hover:bg-[#EFF6FF]"
+                    >
+                      Google Drive (15 GB Free)
+                    </a>
+                    <a
+                      href="https://github.com/kiron-official/kiron-official.github.io/releases/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#A5DDD0] text-[#047857] text-[11px] font-semibold hover:bg-[#ECFDF5]"
+                    >
+                      GitHub Releases (up to 2 GB .mp4)
+                    </a>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <label className="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-[#059669] bg-[#F4FBF8] text-[#047857] text-xs font-bold hover:bg-[#E6F6F0] cursor-pointer">
                     <span>
@@ -1106,12 +1138,40 @@ export function AdminPanelModal({
                 <input
                   value={vUrl}
                   onChange={(e) => setVUrl(e.target.value)}
-                  placeholder="Paste YouTube / Google Drive / Vimeo / HD .mp4 URL (Recommended)"
+                  placeholder="Paste 500 MB / 30+ min HD Video Link — YouTube, Google Drive, GitHub Release .mp4, Dropbox"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
-                <p className="text-[11px] text-[#4A6B7A]">
-                  Supports HD videos via YouTube, Google Drive (&ldquo;Anyone with the link&rdquo;), Vimeo, or direct .mp4 links.
-                </p>
+                <div className="p-2.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1.5">
+                  <p className="text-[11px] text-[#0F2937] leading-relaxed">
+                    <strong>30-min / 500 MB+ HD Videos:</strong> Upload to YouTube (Public or Unlisted), Google Drive (&ldquo;Anyone with the link&rdquo;), or GitHub Releases (.mp4 up to 2 GB) and paste the link above for instant HD playback.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href="https://studio.youtube.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#FCA5A5] text-[#DC2626] text-[11px] font-semibold hover:bg-[#FEF2F2]"
+                    >
+                      YouTube Studio
+                    </a>
+                    <a
+                      href="https://drive.google.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#93C5FD] text-[#0369A1] text-[11px] font-semibold hover:bg-[#EFF6FF]"
+                    >
+                      Google Drive
+                    </a>
+                    <a
+                      href="https://github.com/kiron-official/kiron-official.github.io/releases/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#A5DDD0] text-[#047857] text-[11px] font-semibold hover:bg-[#ECFDF5]"
+                    >
+                      GitHub Releases (up to 2 GB)
+                    </a>
+                  </div>
+                </div>
                 <label className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-[#0284C7] bg-[#F0F9FF] text-[#0369A1] text-xs font-bold hover:bg-[#E0F2FE] cursor-pointer">
                   <span>
                     {vFile
@@ -1365,7 +1425,7 @@ export function AdminPanelModal({
                 <h4 className="text-sm font-bold text-[#0284C7]">
                   APK Manager
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <input
                     value={aName}
                     onChange={(e) => setAName(e.target.value)}
@@ -1378,13 +1438,42 @@ export function AdminPanelModal({
                     placeholder="Version"
                     className="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                   />
+                  <input
+                    value={aSize}
+                    onChange={(e) => setASize(e.target.value)}
+                    placeholder="Size (e.g. 480 MB)"
+                    className="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
+                  />
                 </div>
                 <input
                   value={aUrl}
                   onChange={(e) => setAUrl(e.target.value)}
-                  placeholder="APK Download URL (GitHub Releases, Drive, etc.)"
+                  placeholder="APK Download URL — GitHub Releases (up to 2 GB) or Google Drive (500 MB+)"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
+                <div className="p-2.5 rounded-xl bg-[#F4FBF8] border border-[#CDECE2] space-y-1.5">
+                  <p className="text-[11px] text-[#0F2937] leading-relaxed">
+                    <strong>Large APKs (up to 500 MB – 2 GB):</strong> Upload your .apk file to GitHub Releases or Google Drive (&ldquo;Anyone with the link&rdquo;) and paste the link above—visitors get a direct 1-click download.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href="https://github.com/kiron-official/kiron-official.github.io/releases/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#A5DDD0] text-[#047857] text-[11px] font-semibold hover:bg-[#ECFDF5]"
+                    >
+                      Upload APK to GitHub Releases (up to 2 GB)
+                    </a>
+                    <a
+                      href="https://drive.google.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#93C5FD] text-[#0369A1] text-[11px] font-semibold hover:bg-[#EFF6FF]"
+                    >
+                      Upload APK to Google Drive
+                    </a>
+                  </div>
+                </div>
                 <label className="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-dashed border-[#0284C7] bg-[#F0F9FF] text-[#0369A1] text-xs font-bold hover:bg-[#E0F2FE] cursor-pointer">
                   <span>
                     {aFile

@@ -35,7 +35,14 @@ import {
   PostItem,
   SERIAL_TABS,
 } from './types';
-import { formatWa, getDefaultState, makeId, ytEmbed } from './utils';
+import {
+  formatWa,
+  getDefaultState,
+  makeId,
+  normalizeApkDownloadUrl,
+  normalizeVideoUrl,
+  ytEmbed,
+} from './utils';
 
 function ResolvedImage({
   src,
@@ -62,12 +69,13 @@ function ResolvedVideoPlayer({
   title: string;
   className?: string;
 }) {
-  const resolved = useMediaUrl(url);
-  const yt = ytEmbed(url);
+  const cleanUrl = normalizeVideoUrl(url);
+  const resolved = useMediaUrl(cleanUrl);
+  const yt = ytEmbed(cleanUrl);
   const isDirectVideo =
-    url.startsWith('idb:') ||
-    url.startsWith('data:video/') ||
-    /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url);
+    cleanUrl.startsWith('idb:') ||
+    cleanUrl.startsWith('data:video/') ||
+    /\.(mp4|webm|ogg|mov|m4v|mkv|3gp)(\?|$)/i.test(cleanUrl);
 
   if (yt) {
     return (
@@ -861,7 +869,11 @@ export default function App() {
                             )}
                           </div>
                           <a
-                            href={a.downloadUrl}
+                            href={
+                              isData
+                                ? a.downloadUrl
+                                : normalizeApkDownloadUrl(a.downloadUrl)
+                            }
                             {...(isData
                               ? { download: a.fileName || `${a.name}.apk` }
                               : {

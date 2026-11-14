@@ -24,6 +24,43 @@ export function formatWa(val: string): string {
   return digits ? `https://wa.me/${digits}` : t;
 }
 
+export function normalizeVideoUrl(url: string): string {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return '';
+  try {
+    const u = new URL(trimmed);
+    if (u.hostname.includes('dropbox.com')) {
+      u.searchParams.delete('dl');
+      u.searchParams.set('raw', '1');
+      return u.toString();
+    }
+  } catch {
+    return trimmed;
+  }
+  return trimmed;
+}
+
+export function normalizeApkDownloadUrl(url: string): string {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return '';
+  try {
+    const u = new URL(trimmed);
+    if (u.hostname.includes('drive.google.com')) {
+      const match = u.pathname.match(/\/file\/d\/([^/]+)/);
+      const id = match?.[1] || u.searchParams.get('id');
+      if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
+    }
+    if (u.hostname.includes('dropbox.com')) {
+      u.searchParams.delete('raw');
+      u.searchParams.set('dl', '1');
+      return u.toString();
+    }
+  } catch {
+    return trimmed;
+  }
+  return trimmed;
+}
+
 export function ytEmbed(url: string): string | null {
   try {
     const u = new URL(url.trim());
@@ -52,6 +89,14 @@ export function ytEmbed(url: string): string | null {
     if (u.hostname.includes('vimeo.com')) {
       const match = u.pathname.match(/\/(\d+)/);
       return match?.[1] ? `https://player.vimeo.com/video/${match[1]}` : null;
+    }
+    if (u.hostname.includes('dailymotion.com')) {
+      const match = u.pathname.match(/\/video\/([^/_]+)/);
+      return match?.[1] ? `https://www.dailymotion.com/embed/video/${match[1]}` : null;
+    }
+    if (u.hostname === 'dai.ly') {
+      const id = u.pathname.replace('/', '').trim();
+      return id ? `https://www.dailymotion.com/embed/video/${id}` : null;
     }
   } catch {
     return null;

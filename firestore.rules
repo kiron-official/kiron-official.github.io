@@ -1,0 +1,268 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdminUser() {
+      return isSignedIn() && (
+        (
+          request.auth.token.email == 'whatsapp.number.korean@gmail.com' &&
+          request.auth.token.email_verified == true
+        ) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function hasValidProof(proof, scope) {
+      return proof is string
+        && proof.size() == 64
+        && proof == hashing.sha256(('8081:' + scope).toUtf8()).toHexString().lower();
+    }
+
+    function isValidSocials(s) {
+      return s is map
+        && s.keys().hasAll(['facebook', 'whatsapp', 'tiktok', 'telegram', 'wechat'])
+        && s.keys().hasOnly(['facebook', 'whatsapp', 'tiktok', 'telegram', 'wechat'])
+        && s.facebook is string && s.facebook.size() <= 500
+        && s.whatsapp is string && s.whatsapp.size() <= 500
+        && s.tiktok is string && s.tiktok.size() <= 500
+        && s.telegram is string && s.telegram.size() <= 500
+        && s.wechat is string && s.wechat.size() <= 500;
+    }
+
+    function isValidSiteProfile(data) {
+      return data.keys().hasAll(['avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
+        && data.keys().hasOnly(['avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
+        && data.avatar is string && data.avatar.size() <= 450000
+        && data.bio is string && data.bio.size() <= 2000
+        && isValidSocials(data.socials)
+        && data.authProof is string && data.authProof.size() == 64
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPost(data, postId) {
+      return data.keys().hasAll(['id', 'title', 'cat', 'body', 'img', 'videoUrl', 'createdAt', 'deleted', 'authProof', 'createdServerAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'title', 'cat', 'body', 'img', 'videoUrl', 'createdAt', 'deleted', 'authProof', 'createdServerAt', 'updatedAt'])
+        && data.id == postId
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.cat in ['Update', 'Photo', 'Announcement']
+        && data.body is string && data.body.size() <= 8000
+        && data.img is string && data.img.size() <= 450000
+        && data.videoUrl is string && data.videoUrl.size() <= 750000
+        && data.createdAt is string && data.createdAt.size() <= 40
+        && data.deleted is bool
+        && data.authProof is string && data.authProof.size() == 64
+        && data.createdServerAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidComment(data, commentId) {
+      return data.keys().hasAll(['id', 'author', 'text', 'deleted', 'authProof', 'createdServerAt'])
+        && data.keys().hasOnly(['id', 'author', 'text', 'deleted', 'authProof', 'createdServerAt'])
+        && data.id == commentId
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.author is string && data.author.size() >= 1 && data.author.size() <= 80
+        && data.text is string && data.text.size() >= 1 && data.text.size() <= 1000
+        && data.deleted is bool
+        && data.authProof is string && data.authProof.size() <= 64
+        && data.createdServerAt is timestamp;
+    }
+
+    function isValidPhoto(data, photoId) {
+      return data.keys().hasAll(['id', 'img', 'cap', 'deleted', 'authProof', 'createdServerAt'])
+        && data.keys().hasOnly(['id', 'img', 'cap', 'deleted', 'authProof', 'createdServerAt'])
+        && data.id == photoId
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.img is string && data.img.size() >= 1 && data.img.size() <= 450000
+        && data.cap is string && data.cap.size() <= 300
+        && data.deleted is bool
+        && data.authProof is string && data.authProof.size() == 64
+        && data.createdServerAt is timestamp;
+    }
+
+    function isValidVideo(data, videoId) {
+      return data.keys().hasAll(['id', 'title', 'url', 'description', 'createdAt', 'deleted', 'authProof', 'createdServerAt'])
+        && data.keys().hasOnly(['id', 'title', 'url', 'description', 'createdAt', 'deleted', 'authProof', 'createdServerAt'])
+        && data.id == videoId
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.url is string && data.url.size() >= 1 && data.url.size() <= 750000
+        && data.description is string && data.description.size() <= 2000
+        && data.createdAt is string && data.createdAt.size() <= 40
+        && data.deleted is bool
+        && data.authProof is string && data.authProof.size() == 64
+        && data.createdServerAt is timestamp;
+    }
+
+    function isValidApk(data, apkId) {
+      return data.keys().hasAll(['id', 'name', 'version', 'description', 'downloadUrl', 'fileName', 'sizeLabel', 'createdAt', 'deleted', 'authProof', 'createdServerAt'])
+        && data.keys().hasOnly(['id', 'name', 'version', 'description', 'downloadUrl', 'fileName', 'sizeLabel', 'createdAt', 'deleted', 'authProof', 'createdServerAt'])
+        && data.id == apkId
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 150
+        && data.version is string && data.version.size() >= 1 && data.version.size() <= 40
+        && data.description is string && data.description.size() <= 2000
+        && data.downloadUrl is string && data.downloadUrl.size() >= 1 && data.downloadUrl.size() <= 750000
+        && data.fileName is string && data.fileName.size() <= 200
+        && data.sizeLabel is string && data.sizeLabel.size() <= 40
+        && data.createdAt is string && data.createdAt.size() <= 40
+        && data.deleted is bool
+        && data.authProof is string && data.authProof.size() == 64
+        && data.createdServerAt is timestamp;
+    }
+
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+    }
+
+    match /admins/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isAdminUser());
+      allow list, create, update, delete: if false;
+    }
+
+    match /site/{docId} {
+      allow get: if docId == 'public';
+      allow list: if false;
+      allow create: if docId == 'public'
+        && isValidSiteProfile(incoming())
+        && incoming().updatedAt == request.time
+        && (hasValidProof(incoming().authProof, 'public') || isAdminUser());
+      allow update: if docId == 'public'
+        && isValidSiteProfile(incoming())
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
+        && (hasValidProof(incoming().authProof, 'public') || isAdminUser());
+      allow delete: if false;
+    }
+
+    match /posts/{postId} {
+      allow get: if isValidId(postId);
+      allow list: if true;
+      allow create: if isValidId(postId)
+        && isValidPost(incoming(), postId)
+        && incoming().deleted == false
+        && incoming().createdServerAt == request.time
+        && incoming().updatedAt == request.time
+        && (hasValidProof(incoming().authProof, postId) || isAdminUser());
+      allow update: if isValidId(postId)
+        && isValidPost(incoming(), postId)
+        && incoming().id == existing().id
+        && incoming().createdServerAt == existing().createdServerAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof', 'updatedAt'])
+        && incoming().deleted == true
+        && (hasValidProof(incoming().authProof, postId + ':delete') || isAdminUser());
+      allow delete: if false;
+
+      match /comments/{commentId} {
+        allow get: if isValidId(postId) && isValidId(commentId);
+        allow list: if isValidId(postId);
+        allow create: if isValidId(postId)
+          && isValidId(commentId)
+          && isValidComment(incoming(), commentId)
+          && incoming().deleted == false
+          && incoming().authProof == ''
+          && incoming().createdServerAt == request.time
+          && get(/databases/$(database)/documents/posts/$(postId)).data.deleted == false;
+        allow update: if isValidId(postId)
+          && isValidId(commentId)
+          && isValidComment(incoming(), commentId)
+          && incoming().id == existing().id
+          && incoming().author == existing().author
+          && incoming().text == existing().text
+          && incoming().createdServerAt == existing().createdServerAt
+          && incoming().deleted == true
+          && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof'])
+          && (hasValidProof(incoming().authProof, commentId + ':delete') || isAdminUser());
+        allow delete: if false;
+      }
+    }
+
+    match /photos/{photoId} {
+      allow get: if isValidId(photoId);
+      allow list: if true;
+      allow create: if isValidId(photoId)
+        && isValidPhoto(incoming(), photoId)
+        && incoming().deleted == false
+        && incoming().createdServerAt == request.time
+        && (hasValidProof(incoming().authProof, photoId) || isAdminUser());
+      allow update: if isValidId(photoId)
+        && isValidPhoto(incoming(), photoId)
+        && incoming().id == existing().id
+        && incoming().img == existing().img
+        && incoming().cap == existing().cap
+        && incoming().createdServerAt == existing().createdServerAt
+        && incoming().deleted == true
+        && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof'])
+        && (hasValidProof(incoming().authProof, photoId + ':delete') || isAdminUser());
+      allow delete: if false;
+    }
+
+    match /videos/{videoId} {
+      allow get: if isValidId(videoId);
+      allow list: if true;
+      allow create: if isValidId(videoId)
+        && isValidVideo(incoming(), videoId)
+        && incoming().deleted == false
+        && incoming().createdServerAt == request.time
+        && (hasValidProof(incoming().authProof, videoId) || isAdminUser());
+      allow update: if isValidId(videoId)
+        && isValidVideo(incoming(), videoId)
+        && incoming().id == existing().id
+        && incoming().title == existing().title
+        && incoming().url == existing().url
+        && incoming().description == existing().description
+        && incoming().createdAt == existing().createdAt
+        && incoming().createdServerAt == existing().createdServerAt
+        && incoming().deleted == true
+        && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof'])
+        && (hasValidProof(incoming().authProof, videoId + ':delete') || isAdminUser());
+      allow delete: if false;
+    }
+
+    match /apks/{apkId} {
+      allow get: if isValidId(apkId);
+      allow list: if true;
+      allow create: if isValidId(apkId)
+        && isValidApk(incoming(), apkId)
+        && incoming().deleted == false
+        && incoming().createdServerAt == request.time
+        && (hasValidProof(incoming().authProof, apkId) || isAdminUser());
+      allow update: if isValidId(apkId)
+        && isValidApk(incoming(), apkId)
+        && incoming().id == existing().id
+        && incoming().name == existing().name
+        && incoming().version == existing().version
+        && incoming().description == existing().description
+        && incoming().downloadUrl == existing().downloadUrl
+        && incoming().fileName == existing().fileName
+        && incoming().sizeLabel == existing().sizeLabel
+        && incoming().createdAt == existing().createdAt
+        && incoming().createdServerAt == existing().createdServerAt
+        && incoming().deleted == true
+        && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof'])
+        && (hasValidProof(incoming().authProof, apkId + ':delete') || isAdminUser());
+      allow delete: if false;
+    }
+  }
+}

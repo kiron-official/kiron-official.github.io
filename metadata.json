@@ -1,0 +1,6 @@
+{
+  "name": "MD KIRON MONDAL",
+  "description": "Official personal website of MD KIRON MONDAL. Explore posts, videos, photos, APK releases, announcements, and connect on social platforms.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

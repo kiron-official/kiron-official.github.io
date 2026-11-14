@@ -1,0 +1,406 @@
+{
+  "entities": {
+    "SocialLinks": {
+      "title": "SocialLinks",
+      "description": "Public social media profile URLs and handles.",
+      "type": "object",
+      "properties": {
+        "facebook": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Facebook profile URL"
+        },
+        "whatsapp": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "WhatsApp URL or phone number"
+        },
+        "tiktok": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "TikTok profile URL"
+        },
+        "telegram": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Telegram link"
+        },
+        "wechat": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "WeChat link or ID"
+        }
+      },
+      "required": ["facebook", "whatsapp", "tiktok", "telegram", "wechat"]
+    },
+    "SiteProfile": {
+      "title": "SiteProfile",
+      "description": "Public personal website profile, bio, avatar, and social links.",
+      "type": "object",
+      "properties": {
+        "avatar": {
+          "type": "string",
+          "maxLength": 450000,
+          "description": "Profile avatar URL or compressed image data URL"
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Public biography text"
+        },
+        "socials": {
+          "type": "object",
+          "$ref": "#/entities/SocialLinks",
+          "description": "Public social platform links"
+        },
+        "authProof": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "maxLength": 64,
+          "description": "SHA-256 admin verification proof"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update"
+        }
+      },
+      "required": ["avatar", "bio", "socials", "authProof", "updatedAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A public post or announcement on the personal website.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Unique post ID"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Post headline"
+        },
+        "cat": {
+          "type": "string",
+          "enum": ["Update", "Photo", "Announcement"],
+          "description": "Post category"
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 8000,
+          "description": "Post content text"
+        },
+        "img": {
+          "type": "string",
+          "maxLength": 450000,
+          "description": "Optional image URL or compressed data URL"
+        },
+        "videoUrl": {
+          "type": "string",
+          "maxLength": 750000,
+          "description": "Optional video URL or small data URL"
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Human-readable month and year"
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete flag managed by admin"
+        },
+        "authProof": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "maxLength": 64,
+          "description": "SHA-256 admin verification proof"
+        },
+        "createdServerAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "cat",
+        "body",
+        "img",
+        "videoUrl",
+        "createdAt",
+        "deleted",
+        "authProof",
+        "createdServerAt",
+        "updatedAt"
+      ]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "A visitor comment on a post.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Unique comment ID"
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Comment author display name"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Comment text"
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete flag managed by admin"
+        },
+        "authProof": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Empty on visitor create; SHA-256 admin proof on delete"
+        },
+        "createdServerAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        }
+      },
+      "required": ["id", "author", "text", "deleted", "authProof", "createdServerAt"]
+    },
+    "Photo": {
+      "title": "Photo",
+      "description": "A gallery photo published by the admin.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Unique photo ID"
+        },
+        "img": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 450000,
+          "description": "Photo URL or compressed image data URL"
+        },
+        "cap": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional photo caption"
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete flag managed by admin"
+        },
+        "authProof": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "maxLength": 64,
+          "description": "SHA-256 admin verification proof"
+        },
+        "createdServerAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        }
+      },
+      "required": ["id", "img", "cap", "deleted", "authProof", "createdServerAt"]
+    },
+    "Video": {
+      "title": "Video",
+      "description": "A video item published by the admin.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Unique video ID"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Video title"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 750000,
+          "description": "YouTube, direct video URL, or compact data URL"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Optional video description"
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Human-readable month and year"
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete flag managed by admin"
+        },
+        "authProof": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "maxLength": 64,
+          "description": "SHA-256 admin verification proof"
+        },
+        "createdServerAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        }
+      },
+      "required": ["id", "title", "url", "description", "createdAt", "deleted", "authProof", "createdServerAt"]
+    },
+    "Apk": {
+      "title": "Apk",
+      "description": "An Android APK release published by the admin.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Unique APK ID"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "description": "App name"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Version string"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Optional release notes"
+        },
+        "downloadUrl": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 750000,
+          "description": "APK download URL"
+        },
+        "fileName": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "APK file name"
+        },
+        "sizeLabel": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Human-readable size label"
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Human-readable month and year"
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete flag managed by admin"
+        },
+        "authProof": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "maxLength": 64,
+          "description": "SHA-256 admin verification proof"
+        },
+        "createdServerAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "version",
+        "description",
+        "downloadUrl",
+        "fileName",
+        "sizeLabel",
+        "createdAt",
+        "deleted",
+        "authProof",
+        "createdServerAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Admin authorization record keyed by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Admin Google email"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"],
+          "description": "Admin role"
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/site/{docId}": {
+      "schema": { "$ref": "#/entities/SiteProfile" },
+      "description": "Public site profile and social links stored at site/public."
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Public posts and announcements created by the admin."
+    },
+    "/posts/{postId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/Comment" },
+      "description": "Public visitor comments on a specific post."
+    },
+    "/photos/{photoId}": {
+      "schema": { "$ref": "#/entities/Photo" },
+      "description": "Gallery photos published by the admin."
+    },
+    "/videos/{videoId}": {
+      "schema": { "$ref": "#/entities/Video" },
+      "description": "Videos published by the admin."
+    },
+    "/apks/{apkId}": {
+      "schema": { "$ref": "#/entities/Apk" },
+      "description": "APK releases published by the admin."
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Trusted admin role lookup collection."
+    }
+  }
+}

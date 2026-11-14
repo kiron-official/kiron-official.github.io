@@ -127,23 +127,23 @@ export function generateStandaloneHtml(state: PortalState): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MD KIRON MONDAL (বাবুনির বাবু) — Official Website</title>
-  <meta name="description" content="Official website of MD KIRON MONDAL (বাবুনির বাবু) at kiron-official.github.io. View profile photo, posts, photos, HD videos, and APKs." />
+  <title>বাবুনির বাবু · MD KIRON MONDAL — Official Website</title>
+  <meta name="description" content="বাবুনির বাবু (MD KIRON MONDAL) — Official personal website at kiron-official.github.io. View profile photo, posts, photos, HD videos, and APKs." />
   <meta name="keywords" content="বাবুনির বাবু, Babunir Babu, MD KIRON MONDAL, Kiron Mondal, kiron-official, kiron-official.github.io" />
-  <meta name="author" content="MD KIRON MONDAL (বাবুনির বাবু)" />
+  <meta name="author" content="বাবুনির বাবু (MD KIRON MONDAL)" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
   <link rel="canonical" href="https://kiron-official.github.io/" />
   <link rel="icon" type="image/jpeg" href="./profile.jpg" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://kiron-official.github.io/" />
-  <meta property="og:title" content="MD KIRON MONDAL (বাবুনির বাবু) — Official Website" />
-  <meta property="og:description" content="Official website of MD KIRON MONDAL (বাবুনির বাবু) at kiron-official.github.io." />
+  <meta property="og:title" content="বাবুনির বাবু · MD KIRON MONDAL — Official Website" />
+  <meta property="og:description" content="বাবুনির বাবু (MD KIRON MONDAL) — Official personal website at kiron-official.github.io." />
   <meta property="og:image" content="https://kiron-official.github.io/profile.jpg" />
-  <meta property="og:image:alt" content="MD KIRON MONDAL (বাবুনির বাবু) Profile Photo" />
-  <meta property="og:site_name" content="MD KIRON MONDAL — বাবুনির বাবু" />
+  <meta property="og:image:alt" content="বাবুনির বাবু (MD KIRON MONDAL) Profile Photo" />
+  <meta property="og:site_name" content="বাবুনির বাবু — MD KIRON MONDAL" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="MD KIRON MONDAL (বাবুনির বাবু) — Official Website" />
-  <meta name="twitter:description" content="Official website of MD KIRON MONDAL (বাবুনির বাবু) at kiron-official.github.io." />
+  <meta name="twitter:title" content="বাবুনির বাবু · MD KIRON MONDAL — Official Website" />
+  <meta name="twitter:description" content="বাবুনির বাবু (MD KIRON MONDAL) — Official personal website at kiron-official.github.io." />
   <meta name="twitter:image" content="https://kiron-official.github.io/profile.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

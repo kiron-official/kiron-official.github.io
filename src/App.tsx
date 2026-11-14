@@ -117,6 +117,54 @@ function ResolvedVideoPlayer({
   );
 }
 
+function ExpandableBody({
+  text,
+  isExpanded,
+  onToggle,
+  wrapperClassName = 'mb-2.5',
+}: {
+  text: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+  wrapperClassName?: string;
+}) {
+  const pRef = useRef<HTMLParagraphElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      const el = pRef.current;
+      if (!el || isExpanded) return;
+      setHasOverflow(el.scrollHeight > el.clientHeight + 2);
+    };
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [text, isExpanded]);
+
+  return (
+    <div className={wrapperClassName}>
+      <p
+        ref={pRef}
+        className={`text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line ${
+          isExpanded ? '' : 'line-clamp-5'
+        }`}
+      >
+        {text}
+      </p>
+      {(hasOverflow || isExpanded) && (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="mt-1 text-xs font-semibold text-[#0284C7] hover:underline cursor-pointer"
+        >
+          {isExpanded ? 'Show less' : 'Read more'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [profile, setProfile] = useState<PublicSiteProfile>(() => {
     const def = getDefaultState();
@@ -379,9 +427,6 @@ export default function App() {
     ANNOUNCEMENTS: { label: '+ Add Announcement', tab: 'posts' },
   };
 
-  const isLongText = (text: string) =>
-    text.length > 135 || text.split('\n').length > 3;
-
   return (
     <div className="min-h-screen flex flex-col bg-[#F3FAF8] text-[#0F2937]">
       {/* Header */}
@@ -556,7 +601,6 @@ export default function App() {
                       const cmts = p.comments || [];
                       const isOpen = !!openComments[p.id];
                       const isExpanded = !!expandedPosts[p.id];
-                      const showExpand = isLongText(p.body);
                       return (
                         <article
                           key={p.id}
@@ -615,29 +659,16 @@ export default function App() {
                               {p.title}
                             </h3>
                             {p.body && (
-                              <div className="mb-2.5">
-                                <p
-                                  className={`text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line ${
-                                    isExpanded ? '' : 'line-clamp-2'
-                                  }`}
-                                >
-                                  {p.body}
-                                </p>
-                                {showExpand && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setExpandedPosts((prev) => ({
-                                        ...prev,
-                                        [p.id]: !prev[p.id],
-                                      }))
-                                    }
-                                    className="mt-1 text-xs font-semibold text-[#0284C7] hover:underline cursor-pointer"
-                                  >
-                                    {isExpanded ? 'Show less' : 'Read more'}
-                                  </button>
-                                )}
-                              </div>
+                              <ExpandableBody
+                                text={p.body}
+                                isExpanded={isExpanded}
+                                onToggle={() =>
+                                  setExpandedPosts((prev) => ({
+                                    ...prev,
+                                    [p.id]: !prev[p.id],
+                                  }))
+                                }
+                              />
                             )}
 
                             <div className="mt-auto pt-2.5 border-t border-[#E4F3EE]">
@@ -817,7 +848,7 @@ export default function App() {
                             {v.title}
                           </h3>
                           {v.description && (
-                            <p className="mt-1 text-[13.5px] text-[#335160] line-clamp-2">
+                            <p className="mt-1 text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line line-clamp-4">
                               {v.description}
                             </p>
                           )}
@@ -864,7 +895,7 @@ export default function App() {
                               {a.createdAt ? ` · ${a.createdAt}` : ''}
                             </div>
                             {a.description && (
-                              <p className="text-[13.5px] text-[#335160] mt-1.5 line-clamp-2">
+                              <p className="text-[13.5px] text-[#335160] leading-relaxed mt-1.5 line-clamp-4">
                                 {a.description}
                               </p>
                             )}
@@ -902,7 +933,6 @@ export default function App() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
                     {announcementPosts.map((item) => {
                       const isExpanded = !!expandedPosts[`ann-${item.id}`];
-                      const showExpand = isLongText(item.body);
                       return (
                         <article
                           key={item.id}
@@ -927,29 +957,17 @@ export default function App() {
                             {item.title}
                           </h3>
                           {item.body && (
-                            <div>
-                              <p
-                                className={`text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line ${
-                                  isExpanded ? '' : 'line-clamp-3'
-                                }`}
-                              >
-                                {item.body}
-                              </p>
-                              {showExpand && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setExpandedPosts((prev) => ({
-                                      ...prev,
-                                      [`ann-${item.id}`]: !prev[`ann-${item.id}`],
-                                    }))
-                                  }
-                                  className="mt-1 text-xs font-semibold text-[#0284C7] hover:underline cursor-pointer"
-                                >
-                                  {isExpanded ? 'Show less' : 'Read more'}
-                                </button>
-                              )}
-                            </div>
+                            <ExpandableBody
+                              text={item.body}
+                              isExpanded={isExpanded}
+                              wrapperClassName=""
+                              onToggle={() =>
+                                setExpandedPosts((prev) => ({
+                                  ...prev,
+                                  [`ann-${item.id}`]: !prev[`ann-${item.id}`],
+                                }))
+                              }
+                            />
                           )}
                         </article>
                       );

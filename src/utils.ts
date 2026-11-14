@@ -197,7 +197,7 @@ export function generateStandaloneHtml(state: PortalState): string {
   <meta name="twitter:image" content="https://kiron-official.github.io/profile.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="application/ld+json">
   {
@@ -222,7 +222,6 @@ export function generateStandaloneHtml(state: PortalState): string {
   <style>
     html { scroll-behavior: smooth; font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; background-color: #F3FAF8; color: #0F2937; }
     .font-display { font-family: "Playfair Display", Georgia, serif; }
-    .font-signature { font-family: "Cinzel", "Playfair Display", Georgia, serif; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col bg-[#F3FAF8] text-[#0F2937]">
@@ -230,7 +229,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-8">
       <a href="#top" class="inline-flex items-center gap-3 text-[#0F2937] font-bold text-base sm:text-lg tracking-tight whitespace-nowrap shrink-0">
         <span id="navAvatar" class="w-9 h-9 rounded-full border-2 border-[#059669] bg-white flex items-center justify-center font-bold text-sm text-[#059669] overflow-hidden shrink-0">K</span>
-        <span class="font-signature tracking-[0.07em] bg-gradient-to-r from-[#065F46] via-[#0F2937] to-[#0284C7] bg-clip-text text-transparent">MD KIRON MONDAL</span>
+        <span>MD KIRON MONDAL</span>
       </a>
       <nav aria-label="Primary Navigation" class="hidden md:flex items-center gap-6 text-sm font-semibold text-[#114B5F]" id="topNavLinks"></nav>
       <div class="flex items-center gap-3 shrink-0">
@@ -247,8 +246,7 @@ export function generateStandaloneHtml(state: PortalState): string {
         <div class="flex items-center gap-4 max-w-xl">
           <img id="heroAvatar" src="profile.jpg" alt="MD KIRON MONDAL" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg shrink-0" />
           <div>
-            <h1 class="font-signature text-2xl sm:text-[34px] font-bold tracking-[0.06em] bg-gradient-to-r from-[#065F46] via-[#0F2937] to-[#0369A1] bg-clip-text text-transparent leading-tight">MD KIRON MONDAL</h1>
-            <div aria-hidden="true" class="mt-1.5 h-[3px] w-20 rounded-full bg-gradient-to-r from-[#059669] to-[#0284C7]"></div>
+            <h1 class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight">MD KIRON MONDAL</h1>
             <p id="heroBio" class="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line hidden"></p>
           </div>
         </div>
@@ -402,41 +400,41 @@ export function generateStandaloneHtml(state: PortalState): string {
     }
     function renderPosts() {
       if (!state.posts.length) return '<div class="bg-white border border-[#B7DFD4] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No posts yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch justify-items-center">' + state.posts.map((p, idx) => {
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">' + state.posts.map((p, idx) => {
         const cmts = p.comments || []; const isOpen = !!openComments[p.id];
-        return '<article class="max-w-[248px] w-full mx-auto bg-white border border-[#A7DFD2] rounded-xl overflow-hidden flex flex-col">' +
+        return '<article class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden flex flex-col">' +
           (p.img ? '<button type="button" onclick="openSingleLightbox(' + idx + ')" class="block w-full bg-[#EFF7F5] overflow-hidden group cursor-pointer shrink-0"><img src="' + p.img + '" alt="' + esc(p.title) + '" class="w-full h-36 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' : '') +
-          '<div class="p-3.5 flex-1 flex flex-col"><div class="flex flex-wrap items-center gap-1.5 text-[11.5px] font-semibold text-[#059669] mb-1"><span>' + esc(p.cat || 'Update') + '</span>' + (p.createdAt ? '<span class="text-[#8EB9AD]">&middot;</span><span class="text-[#0369A1] font-medium">' + esc(p.createdAt) + '</span>' : '') + '</div>' +
-          '<h3 class="text-[15.5px] font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1.5">' + esc(p.title) + '</h3>' +
-          '<p class="text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line line-clamp-2 mb-2.5">' + esc(p.body) + '</p>' +
-          '<div class="mt-auto pt-2.5 border-t border-[#E4F3EE]"><button type="button" onclick="toggleCmt(\\'' + esc(p.id) + '\\')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#93C5FD] bg-[#F0F9FF] text-[#0369A1] text-xs font-semibold hover:bg-[#E0F2FE] cursor-pointer">Comments (' + cmts.length + ')</button></div>' +
+          '<div class="p-3.5 flex-1 flex flex-col"><div class="flex flex-wrap items-center gap-1.5 text-[10.5px] font-semibold text-[#059669] mb-1"><span>' + esc(p.cat || 'Update') + '</span>' + (p.createdAt ? '<span class="text-[#8EB9AD]">&middot;</span><span class="text-[#0369A1] font-medium">' + esc(p.createdAt) + '</span>' : '') + '</div>' +
+          '<h3 class="text-sm font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1">' + esc(p.title) + '</h3>' +
+          '<p class="text-xs text-[#335160] leading-relaxed whitespace-pre-line line-clamp-2 mb-2.5">' + esc(p.body) + '</p>' +
+          '<div class="mt-auto pt-2.5 border-t border-[#E4F3EE]"><button type="button" onclick="toggleCmt(\\'' + esc(p.id) + '\\')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#93C5FD] bg-[#F0F9FF] text-[#0369A1] text-[11px] font-semibold hover:bg-[#E0F2FE] cursor-pointer">Comments (' + cmts.length + ')</button></div>' +
           (isOpen ? '<div class="mt-2.5 pt-2.5 border-t border-[#E4F3EE] space-y-2">' + (cmts.length ? cmts.map((c) => '<div class="bg-[#F4FBF8] border border-[#CDECE2] rounded-xl px-2.5 py-1.5 text-xs"><div class="font-bold text-[#047857] text-[11px] mb-0.5">' + esc(c.author) + '</div><div class="text-[#0F2937]">' + esc(c.text) + '</div></div>').join('') : '<p class="text-xs text-[#5A7B8A]">No comments yet.</p>') + '<form onsubmit="addCmt(event, \\'' + esc(p.id) + '\\')" class="space-y-2 pt-1"><input id="ca-' + esc(p.id) + '" placeholder="Your name (optional)" class="w-full px-2.5 py-1.5 rounded-lg border border-[#BCE2D6] bg-white text-xs text-[#0F2937]" /><div class="flex gap-2"><input id="ct-' + esc(p.id) + '" placeholder="Write a comment..." class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#BCE2D6] bg-white text-xs text-[#0F2937]" /><button type="submit" class="px-3 py-1.5 rounded-lg bg-[#059669] text-white text-xs font-semibold hover:bg-[#047857] shrink-0 cursor-pointer">Send</button></div></form></div>' : '') +
           '</div></article>';
       }).join('') + '</div>';
     }
     function renderPhotos() {
       if (!state.photos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No photos added yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start justify-items-center">' + state.photos.map((g, i) => '<figure class="max-w-[248px] w-full mx-auto bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-40 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-3.5 py-2.5 text-[13.5px] text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-40 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-3.5 py-2.5 text-xs text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
     }
     function renderVideos() {
       if (!state.videos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No videos added yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start justify-items-center">' + state.videos.map((v) => {
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.videos.map((v) => {
         const yt = ytEmbed(v.url); const direct = v.url.startsWith('data:video/') || /\\.(mp4|webm|ogg)(\\?|$)/i.test(v.url);
         const media = yt ? '<iframe src="' + esc(yt) + '" title="' + esc(v.title) + '" allowfullscreen class="w-full h-full border-0"></iframe>' : direct ? '<video src="' + v.url + '" controls preload="metadata" class="w-full h-full object-contain bg-black"></video>' : '<div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0F2937] to-[#0369A1] p-6"><a href="' + esc(v.url) + '" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg bg-[#059669] text-white text-xs font-semibold">Watch Video</a></div>';
-        return '<article class="max-w-[248px] w-full mx-auto bg-white border border-[#9FD0EC] rounded-xl overflow-hidden"><div class="aspect-video bg-[#0F2937]">' + media + '</div><div class="p-3.5">' + (v.createdAt ? '<div class="text-[11.5px] font-semibold text-[#0284C7] mb-1">' + esc(v.createdAt) + '</div>' : '') + '<h3 class="text-[15.5px] font-bold text-[#0F2937]">' + esc(v.title) + '</h3>' + (v.description ? '<p class="mt-1 text-[13.5px] text-[#335160]">' + esc(v.description) + '</p>' : '') + '</div></article>';
+        return '<article class="bg-white border border-[#9FD0EC] rounded-xl overflow-hidden"><div class="aspect-video bg-[#0F2937]">' + media + '</div><div class="p-3.5">' + (v.createdAt ? '<div class="text-[10.5px] font-semibold text-[#0284C7] mb-1">' + esc(v.createdAt) + '</div>' : '') + '<h3 class="text-sm font-bold text-[#0F2937]">' + esc(v.title) + '</h3>' + (v.description ? '<p class="mt-1 text-xs text-[#335160]">' + esc(v.description) + '</p>' : '') + '</div></article>';
       }).join('') + '</div>';
     }
     function renderApk() {
       if (!state.apks.length) return '<div class="bg-white border border-[#A7DFD2] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No APK files shared yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start justify-items-center">' + state.apks.map((a) => {
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.apks.map((a) => {
         const isData = a.downloadUrl.startsWith('data:');
-        return '<article class="max-w-[248px] w-full mx-auto bg-white border border-[#A7DFD2] rounded-xl p-3.5 flex flex-col justify-between gap-3"><div><h3 class="text-[15.5px] font-bold text-[#0F2937]">' + esc(a.name) + '</h3><div class="text-xs text-[#0369A1] font-medium mt-0.5">v' + esc(a.version) + (a.sizeLabel ? ' &middot; ' + esc(a.sizeLabel) : '') + (a.createdAt ? ' &middot; ' + esc(a.createdAt) : '') + '</div>' + (a.description ? '<p class="text-[13.5px] text-[#335160] mt-1.5">' + esc(a.description) + '</p>' : '') + '</div><a href="' + esc(a.downloadUrl) + '" ' + (isData ? 'download="' + esc(a.fileName || a.name + '.apk') + '"' : 'target="_blank" rel="noopener noreferrer"') + ' class="inline-flex items-center justify-center w-full px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold">Download APK</a></article>';
+        return '<article class="bg-white border border-[#A7DFD2] rounded-xl p-3.5 flex flex-col justify-between gap-3"><div><h3 class="text-sm font-bold text-[#0F2937]">' + esc(a.name) + '</h3><div class="text-[11px] text-[#0369A1] font-medium mt-0.5">v' + esc(a.version) + (a.sizeLabel ? ' &middot; ' + esc(a.sizeLabel) : '') + (a.createdAt ? ' &middot; ' + esc(a.createdAt) : '') + '</div>' + (a.description ? '<p class="text-xs text-[#335160] mt-1.5">' + esc(a.description) + '</p>' : '') + '</div><a href="' + esc(a.downloadUrl) + '" ' + (isData ? 'download="' + esc(a.fileName || a.name + '.apk') + '"' : 'target="_blank" rel="noopener noreferrer"') + ' class="inline-flex items-center justify-center w-full px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold">Download APK</a></article>';
       }).join('') + '</div>';
     }
     function renderAnnouncements() {
       const list = state.posts.filter((p) => p.cat === 'Announcement');
       if (!list.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No announcements published yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start justify-items-center">' + list.map((item) => '<article class="max-w-[248px] w-full mx-auto bg-white border border-[#9FD0EC] rounded-xl p-3.5"><div class="text-[11.5px] font-semibold text-[#0284C7] mb-1">Announcement' + (item.createdAt ? ' &middot; ' + esc(item.createdAt) : '') + '</div><h3 class="text-[15.5px] font-bold text-[#0F2937] mb-1">' + esc(item.title) + '</h3><p class="text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line">' + esc(item.body) + '</p></article>').join('') + '</div>';
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + list.map((item) => '<article class="bg-white border border-[#9FD0EC] rounded-xl p-3.5"><div class="text-[10.5px] font-semibold text-[#0284C7] mb-1">Announcement' + (item.createdAt ? ' &middot; ' + esc(item.createdAt) : '') + '</div><h3 class="text-sm font-bold text-[#0F2937] mb-1">' + esc(item.title) + '</h3><p class="text-xs text-[#335160] leading-relaxed whitespace-pre-line">' + esc(item.body) + '</p></article>').join('') + '</div>';
     }
     function render() {
       const av = document.getElementById('navAvatar');

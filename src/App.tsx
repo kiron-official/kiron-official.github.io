@@ -404,7 +404,9 @@ export default function App() {
                 'K'
               )}
             </span>
-            <span>MD KIRON MONDAL</span>
+            <span className="font-signature tracking-[0.07em] bg-gradient-to-r from-[#065F46] via-[#0F2937] to-[#0284C7] bg-clip-text text-transparent">
+              MD KIRON MONDAL
+            </span>
           </a>
 
           <nav
@@ -462,9 +464,13 @@ export default function App() {
                 </div>
               )}
               <div>
-                <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight text-balance">
+                <h1 className="font-signature text-2xl sm:text-[34px] font-bold tracking-[0.06em] bg-gradient-to-r from-[#065F46] via-[#0F2937] to-[#0369A1] bg-clip-text text-transparent leading-tight text-balance">
                   MD KIRON MONDAL
                 </h1>
+                <div
+                  aria-hidden="true"
+                  className="mt-1.5 h-[3px] w-20 rounded-full bg-gradient-to-r from-[#059669] to-[#0284C7]"
+                />
                 {state.bio && state.bio.trim() && (
                   <p className="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line">
                     {state.bio}
@@ -551,7 +557,7 @@ export default function App() {
                     <p className="text-sm text-[#335160]">No posts yet.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch justify-items-center">
                     {state.posts.map((p, idx) => {
                       const cmts = p.comments || [];
                       const isOpen = !!openComments[p.id];
@@ -560,7 +566,7 @@ export default function App() {
                       return (
                         <article
                           key={p.id}
-                          className="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden flex flex-col shadow-xs hover:shadow-md transition-shadow"
+                          className="max-w-[248px] w-full mx-auto bg-white border border-[#A7DFD2] rounded-xl overflow-hidden flex flex-col shadow-xs hover:shadow-md transition-shadow"
                         >
                           {p.img && (
                             <button
@@ -585,7 +591,7 @@ export default function App() {
                           )}
                           <div className="p-3.5 flex-1 flex flex-col">
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <div className="flex flex-wrap items-center gap-1 text-[10.5px] font-semibold text-[#059669]">
+                              <div className="flex flex-wrap items-center gap-1 text-[11.5px] font-semibold text-[#059669]">
                                 <span>{p.cat || 'Update'}</span>
                                 {p.createdAt && (
                                   <>
@@ -611,13 +617,13 @@ export default function App() {
                                 </button>
                               )}
                             </div>
-                            <h3 className="text-sm font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1">
+                            <h3 className="text-[15.5px] font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1.5">
                               {p.title}
                             </h3>
                             {p.body && (
                               <div className="mb-2.5">
                                 <p
-                                  className={`text-xs text-[#335160] leading-relaxed whitespace-pre-line ${
+                                  className={`text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line ${
                                     isExpanded ? '' : 'line-clamp-2'
                                   }`}
                                 >
@@ -632,7 +638,7 @@ export default function App() {
                                         [p.id]: !prev[p.id],
                                       }))
                                     }
-                                    className="mt-1 text-[11px] font-semibold text-[#0284C7] hover:underline cursor-pointer"
+                                    className="mt-1 text-xs font-semibold text-[#0284C7] hover:underline cursor-pointer"
                                   >
                                     {isExpanded ? 'Show less' : 'Read more'}
                                   </button>
@@ -649,7 +655,7 @@ export default function App() {
                                     [p.id]: !prev[p.id],
                                   }))
                                 }
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#93C5FD] bg-[#F0F9FF] text-[#0369A1] text-[11px] font-semibold hover:bg-[#E0F2FE] cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#93C5FD] bg-[#F0F9FF] text-[#0369A1] text-xs font-semibold hover:bg-[#E0F2FE] cursor-pointer"
                               >
                                 Comments ({cmts.length})
                               </button>
@@ -741,11 +747,11 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch justify-items-center">
                     {state.photos.map((g, i) => (
                       <figure
                         key={g.id}
-                        className="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group flex flex-col shadow-xs hover:shadow-md transition-shadow"
+                        className="max-w-[248px] w-full mx-auto bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group flex flex-col shadow-xs hover:shadow-md transition-shadow"
                       >
                         <button
                           type="button"
@@ -759,7 +765,7 @@ export default function App() {
                           />
                         </button>
                         {(g.cap || isAuthenticated) && (
-                          <figcaption className="px-3.5 py-2.5 text-xs text-[#17465A] flex items-center justify-between gap-2 mt-auto">
+                          <figcaption className="px-3.5 py-2.5 text-[13.5px] text-[#17465A] flex items-center justify-between gap-2 mt-auto">
                             <span className="truncate">{g.cap || ''}</span>
                             {isAuthenticated && (
                               <button
@@ -785,11 +791,11 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch justify-items-center">
                     {state.videos.map((v) => (
                       <article
                         key={v.id}
-                        className="bg-white border border-[#9FD0EC] rounded-xl overflow-hidden flex flex-col shadow-xs hover:shadow-md transition-shadow"
+                        className="max-w-[248px] w-full mx-auto bg-white border border-[#9FD0EC] rounded-xl overflow-hidden flex flex-col shadow-xs hover:shadow-md transition-shadow"
                       >
                         <div className="aspect-video bg-[#0F2937] shrink-0">
                           <ResolvedVideoPlayer url={v.url} title={v.title} />
@@ -797,7 +803,7 @@ export default function App() {
                         <div className="p-3.5 flex-1 flex flex-col">
                           <div className="flex items-center justify-between gap-2 mb-1">
                             {v.createdAt ? (
-                              <div className="text-[10.5px] font-semibold text-[#0284C7] whitespace-nowrap">
+                              <div className="text-[11.5px] font-semibold text-[#0284C7] whitespace-nowrap">
                                 {v.createdAt}
                               </div>
                             ) : (
@@ -813,11 +819,11 @@ export default function App() {
                               </button>
                             )}
                           </div>
-                          <h3 className="text-sm font-bold text-[#0F2937] line-clamp-2">
+                          <h3 className="text-[15.5px] font-bold text-[#0F2937] line-clamp-2">
                             {v.title}
                           </h3>
                           {v.description && (
-                            <p className="mt-1 text-xs text-[#335160] line-clamp-2">
+                            <p className="mt-1 text-[13.5px] text-[#335160] line-clamp-2">
                               {v.description}
                             </p>
                           )}
@@ -835,17 +841,17 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch justify-items-center">
                     {state.apks.map((a) => {
                       const isData = a.downloadUrl.startsWith('data:');
                       return (
                         <article
                           key={a.id}
-                          className="bg-white border border-[#A7DFD2] rounded-xl p-3.5 flex flex-col justify-between gap-3 shadow-xs hover:shadow-md transition-shadow"
+                          className="max-w-[248px] w-full mx-auto bg-white border border-[#A7DFD2] rounded-xl p-3.5 flex flex-col justify-between gap-3 shadow-xs hover:shadow-md transition-shadow"
                         >
                           <div>
                             <div className="flex items-start justify-between gap-2">
-                              <h3 className="text-sm font-bold text-[#0F2937] line-clamp-1">
+                              <h3 className="text-[15.5px] font-bold text-[#0F2937] line-clamp-1">
                                 {a.name}
                               </h3>
                               {isAuthenticated && (
@@ -858,13 +864,13 @@ export default function App() {
                                 </button>
                               )}
                             </div>
-                            <div className="text-[11px] text-[#0369A1] font-medium mt-0.5">
+                            <div className="text-xs text-[#0369A1] font-medium mt-0.5">
                               v{a.version}
                               {a.sizeLabel ? ` · ${a.sizeLabel}` : ''}
                               {a.createdAt ? ` · ${a.createdAt}` : ''}
                             </div>
                             {a.description && (
-                              <p className="text-xs text-[#335160] mt-1.5 line-clamp-2">
+                              <p className="text-[13.5px] text-[#335160] mt-1.5 line-clamp-2">
                                 {a.description}
                               </p>
                             )}
@@ -899,17 +905,17 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch justify-items-center">
                     {announcementPosts.map((item) => {
                       const isExpanded = !!expandedPosts[`ann-${item.id}`];
                       const showExpand = isLongText(item.body);
                       return (
                         <article
                           key={item.id}
-                          className="bg-white border border-[#9FD0EC] rounded-xl p-3.5 flex flex-col shadow-xs hover:shadow-md transition-shadow"
+                          className="max-w-[248px] w-full mx-auto bg-white border border-[#9FD0EC] rounded-xl p-3.5 flex flex-col shadow-xs hover:shadow-md transition-shadow"
                         >
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <div className="text-[10.5px] font-semibold text-[#0284C7]">
+                            <div className="text-[11.5px] font-semibold text-[#0284C7]">
                               Announcement
                               {item.createdAt ? ` · ${item.createdAt}` : ''}
                             </div>
@@ -923,13 +929,13 @@ export default function App() {
                               </button>
                             )}
                           </div>
-                          <h3 className="text-sm font-bold text-[#0F2937] line-clamp-2 mb-1">
+                          <h3 className="text-[15.5px] font-bold text-[#0F2937] line-clamp-2 mb-1.5">
                             {item.title}
                           </h3>
                           {item.body && (
                             <div>
                               <p
-                                className={`text-xs text-[#335160] leading-relaxed whitespace-pre-line ${
+                                className={`text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line ${
                                   isExpanded ? '' : 'line-clamp-3'
                                 }`}
                               >
@@ -944,7 +950,7 @@ export default function App() {
                                       [`ann-${item.id}`]: !prev[`ann-${item.id}`],
                                     }))
                                   }
-                                  className="mt-1 text-[11px] font-semibold text-[#0284C7] hover:underline cursor-pointer"
+                                  className="mt-1 text-xs font-semibold text-[#0284C7] hover:underline cursor-pointer"
                                 >
                                   {isExpanded ? 'Show less' : 'Read more'}
                                 </button>

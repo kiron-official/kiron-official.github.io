@@ -610,12 +610,12 @@ export default function App() {
                             <button
                               type="button"
                               onClick={() => openSingleLightbox(idx)}
-                              className="block w-full bg-[#EFF7F5] overflow-hidden group cursor-pointer shrink-0"
+                              className="block w-full overflow-hidden group cursor-pointer shrink-0"
                             >
                               <ResolvedImage
                                 src={p.img}
                                 alt={p.title}
-                                className="w-full h-36 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]"
+                                className="w-full h-auto block transition-transform duration-200 group-hover:scale-[1.02]"
                               />
                             </button>
                           )}
@@ -772,7 +772,7 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">
                     {state.photos.map((g, i) => (
                       <figure
                         key={g.id}
@@ -781,12 +781,12 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => openGalleryLightbox(i)}
-                          className="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer shrink-0"
+                          className="block w-full overflow-hidden cursor-pointer shrink-0"
                         >
                           <ResolvedImage
                             src={g.img}
                             alt={g.cap || 'Photo'}
-                            className="w-full h-40 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]"
+                            className="w-full h-auto block transition-transform duration-200 group-hover:scale-[1.02]"
                           />
                         </button>
                         {(g.cap || isAuthenticated) && (

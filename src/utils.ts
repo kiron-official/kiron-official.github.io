@@ -403,7 +403,7 @@ export function generateStandaloneHtml(state: PortalState): string {
       return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">' + state.posts.map((p, idx) => {
         const cmts = p.comments || []; const isOpen = !!openComments[p.id];
         return '<article class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden flex flex-col">' +
-          (p.img ? '<button type="button" onclick="openSingleLightbox(' + idx + ')" class="block w-full bg-[#EFF7F5] overflow-hidden group cursor-pointer shrink-0"><img src="' + p.img + '" alt="' + esc(p.title) + '" class="w-full h-36 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' : '') +
+          (p.img ? '<button type="button" onclick="openSingleLightbox(' + idx + ')" class="block w-full overflow-hidden group cursor-pointer shrink-0"><img src="' + p.img + '" alt="' + esc(p.title) + '" class="w-full h-auto block transition-transform duration-200 group-hover:scale-[1.02]" /></button>' : '') +
           '<div class="p-3.5 flex-1 flex flex-col"><div class="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-[#059669] mb-1.5"><span>' + esc(p.cat || 'Update') + '</span>' + (p.createdAt ? '<span class="text-[#8EB9AD]">&middot;</span><span class="text-[#0369A1] font-medium">' + esc(p.createdAt) + '</span>' : '') + '</div>' +
           '<h3 class="text-[15.5px] font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1.5">' + esc(p.title) + '</h3>' +
           '<p class="text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line line-clamp-5 mb-2.5">' + esc(p.body) + '</p>' +
@@ -414,7 +414,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     }
     function renderPhotos() {
       if (!state.photos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No photos added yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full bg-[#EFF7F5] overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-40 object-contain bg-[#EFF7F5] transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-3.5 py-2.5 text-[13.5px] text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-auto block transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-3.5 py-2.5 text-[13.5px] text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
     }
     function renderVideos() {
       if (!state.videos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No videos added yet.</p></div>';

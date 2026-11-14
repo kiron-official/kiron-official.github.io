@@ -84,9 +84,9 @@ export const STORAGE_KEY = 'kiron_portal_backup_v4';
 export const DEFAULT_SOCIALS: SocialLinks = {
   facebook: 'https://www.facebook.com',
   whatsapp: 'https://www.whatsapp.com',
-  tiktok: 'https://www.tiktok.com',
+  tiktok: 'https://www.tiktok.com/@lawyer_dream_status',
   telegram: 'https://telegram.org',
-  wechat: 'https://www.wechat.com',
+  wechat: 'wxid_ldfisj7p5hjr22',
   youtube: 'https://www.youtube.com',
 };
 

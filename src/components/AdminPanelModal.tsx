@@ -18,6 +18,7 @@ import {
 } from '../types';
 import {
   fmtSize,
+  formatTikTok,
   generateStandaloneHtml,
   makeId,
   monthYear,
@@ -301,7 +302,7 @@ export function AdminPanelModal({
         ? 'New Video Post'
         : pCat === 'Photo' || pFile || img
           ? 'New Photo Post'
-          : 'New Update';
+          : 'New Post';
 
       await onCreatePost({
         id: makeId('post'),
@@ -594,7 +595,7 @@ export function AdminPanelModal({
         socials: {
           facebook: socialsInput.facebook.trim(),
           whatsapp: socialsInput.whatsapp.trim(),
-          tiktok: socialsInput.tiktok.trim(),
+          tiktok: formatTikTok(socialsInput.tiktok),
           telegram: socialsInput.telegram.trim(),
           wechat: socialsInput.wechat.trim(),
           youtube: (socialsInput.youtube || '').trim(),
@@ -661,7 +662,7 @@ export function AdminPanelModal({
         for (const p of parsed.posts) {
           await onCreatePost({
             id: p.id || makeId('post'),
-            title: p.title || 'Update',
+            title: p.title || 'POSTS',
             cat: p.cat || 'Update',
             body: p.body || '',
             img: p.img,
@@ -896,7 +897,7 @@ export function AdminPanelModal({
                   onChange={(e) => setPCat(e.target.value as PostCategory)}
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm bg-white"
                 >
-                  <option value="Update">Update</option>
+                  <option value="Update">POSTS</option>
                   <option value="Photo">Photo</option>
                   <option value="Announcement">Announcement</option>
                 </select>
@@ -1083,7 +1084,7 @@ export function AdminPanelModal({
                               {p.title}
                             </strong>
                             <span className="text-xs text-[#0369A1]">
-                              {p.cat}
+                              {!p.cat || p.cat === 'Update' ? 'POSTS' : p.cat}
                               {p.videoUrl ? ' · Video' : ''}
                               {p.createdAt ? ` · ${p.createdAt}` : ''}
                             </span>
@@ -1563,6 +1564,7 @@ export function AdminPanelModal({
                   onChange={(e) =>
                     setSocialsInput((s) => ({ ...s, tiktok: e.target.value }))
                   }
+                  placeholder="https://www.tiktok.com/@username or username"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
               </div>
@@ -1600,6 +1602,7 @@ export function AdminPanelModal({
                   onChange={(e) =>
                     setSocialsInput((s) => ({ ...s, wechat: e.target.value }))
                   }
+                  placeholder="wxid_..."
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
               </div>

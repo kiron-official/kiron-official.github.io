@@ -207,7 +207,9 @@ export function subscribePublicSiteProfile(
               ? d.socials.whatsapp
               : DEFAULT_SOCIALS.whatsapp,
           tiktok:
-            typeof d.socials?.tiktok === 'string'
+            typeof d.socials?.tiktok === 'string' &&
+            d.socials.tiktok.trim() !== 'https://www.tiktok.com' &&
+            d.socials.tiktok.trim() !== 'https://tiktok.com'
               ? d.socials.tiktok
               : DEFAULT_SOCIALS.tiktok,
           telegram:
@@ -215,7 +217,9 @@ export function subscribePublicSiteProfile(
               ? d.socials.telegram
               : DEFAULT_SOCIALS.telegram,
           wechat:
-            typeof d.socials?.wechat === 'string'
+            typeof d.socials?.wechat === 'string' &&
+            d.socials.wechat.trim() !== 'https://www.wechat.com' &&
+            d.socials.wechat.trim() !== 'https://wechat.com'
               ? d.socials.wechat
               : DEFAULT_SOCIALS.wechat,
           youtube:
@@ -275,7 +279,7 @@ export function subscribePosts(
           const d = docSnap.data();
           return {
             id: typeof d.id === 'string' ? d.id : docSnap.id,
-            title: typeof d.title === 'string' ? d.title : 'Update',
+            title: typeof d.title === 'string' ? d.title : 'POSTS',
             cat: (d.cat === 'Photo' || d.cat === 'Announcement'
               ? d.cat
               : 'Update') as PostCategory,
@@ -314,7 +318,7 @@ export async function createCloudPost(post: {
     const authProof = await requireAuthProof(post.id);
     await setDoc(doc(db, 'posts', post.id), {
       id: post.id,
-      title: (post.title || 'New Update').slice(0, 200),
+      title: (post.title || 'New Post').slice(0, 200),
       cat: post.cat,
       body: (post.body || '').slice(0, 8000),
       img: (post.img || '').slice(0, 450000),

@@ -127,20 +127,23 @@ export function generateStandaloneHtml(state: PortalState): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MD KIRON MONDAL — Official Personal Website</title>
-  <meta name="description" content="Official personal website of MD KIRON MONDAL (kiron-official.github.io). Read latest posts, announcements, watch videos, browse photos, and download official APKs." />
-  <meta name="keywords" content="MD KIRON MONDAL, Kiron Mondal, kiron-official, kiron-official.github.io" />
-  <meta name="author" content="MD KIRON MONDAL" />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <title>MD KIRON MONDAL (বাবুনির বাবু) — Official Website</title>
+  <meta name="description" content="Official website of MD KIRON MONDAL (বাবুনির বাবু) at kiron-official.github.io. View profile photo, posts, photos, HD videos, and APKs." />
+  <meta name="keywords" content="বাবুনির বাবু, Babunir Babu, MD KIRON MONDAL, Kiron Mondal, kiron-official, kiron-official.github.io" />
+  <meta name="author" content="MD KIRON MONDAL (বাবুনির বাবু)" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
   <link rel="canonical" href="https://kiron-official.github.io/" />
   <link rel="icon" type="image/jpeg" href="./profile.jpg" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://kiron-official.github.io/" />
-  <meta property="og:title" content="MD KIRON MONDAL — Official Personal Website" />
-  <meta property="og:description" content="Official personal website of MD KIRON MONDAL (kiron-official.github.io)." />
+  <meta property="og:title" content="MD KIRON MONDAL (বাবুনির বাবু) — Official Website" />
+  <meta property="og:description" content="Official website of MD KIRON MONDAL (বাবুনির বাবু) at kiron-official.github.io." />
   <meta property="og:image" content="https://kiron-official.github.io/profile.jpg" />
-  <meta property="og:site_name" content="MD KIRON MONDAL" />
+  <meta property="og:image:alt" content="MD KIRON MONDAL (বাবুনির বাবু) Profile Photo" />
+  <meta property="og:site_name" content="MD KIRON MONDAL — বাবুনির বাবু" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MD KIRON MONDAL (বাবুনির বাবু) — Official Website" />
+  <meta name="twitter:description" content="Official website of MD KIRON MONDAL (বাবুনির বাবু) at kiron-official.github.io." />
   <meta name="twitter:image" content="https://kiron-official.github.io/profile.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -153,13 +156,14 @@ export function generateStandaloneHtml(state: PortalState): string {
       {
         "@type": "Person",
         "name": "MD KIRON MONDAL",
-        "alternateName": ["Kiron Mondal", "kiron-official"],
+        "alternateName": ["বাবুনির বাবু", "Babunir Babu", "Kiron Mondal", "kiron-official"],
         "url": "https://kiron-official.github.io/",
         "image": "https://kiron-official.github.io/profile.jpg"
       },
       {
         "@type": "WebSite",
-        "name": "MD KIRON MONDAL",
+        "name": "MD KIRON MONDAL (বাবুনির বাবু)",
+        "alternateName": ["বাবুনির বাবু", "Babunir Babu"],
         "url": "https://kiron-official.github.io/"
       }
     ]
@@ -193,6 +197,7 @@ export function generateStandaloneHtml(state: PortalState): string {
           <img id="heroAvatar" src="profile.jpg" alt="MD KIRON MONDAL" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg shrink-0" />
           <div>
             <h1 class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight">MD KIRON MONDAL</h1>
+            <p class="mt-0.5 text-sm font-semibold text-[#059669]">বাবুনির বাবু</p>
             <p id="heroBio" class="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line hidden"></p>
           </div>
         </div>

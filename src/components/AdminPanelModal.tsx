@@ -181,9 +181,12 @@ export function AdminPanelModal({
 
   const formatActionError = (err: unknown): string => {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.startsWith('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP')) {
+    if (
+      msg.startsWith('UPLOAD_ERROR:NEEDS_HD_VIDEO_SETUP') ||
+      msg.startsWith('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP')
+    ) {
       setShowVideoCloudSetup(true);
-      return 'For videos longer than 18s (up to 100 MB), open "100 MB Cloud Upload Setup" below and save your free Cloudinary Cloud Name + Preset once (or paste a YouTube/Drive link).';
+      return 'For Original HD videos without blur (up to 100 MB), open "HD 100 MB Upload Setup" above and save your free Cloudinary Cloud Name + Unsigned Preset once — or paste a YouTube / Google Drive link.';
     }
     if (msg.startsWith('UPLOAD_ERROR:')) {
       return msg.slice('UPLOAD_ERROR:'.length).trim();
@@ -972,17 +975,17 @@ export function AdminPanelModal({
                       className="text-[11px] font-bold text-[#0284C7] hover:underline cursor-pointer shrink-0"
                     >
                       {showVideoCloudSetup
-                        ? 'Hide Cloud Upload Setup'
-                        : cloudNameInput && uploadPresetInput
-                          ? '100 MB Cloud Upload: Ready ✓'
-                          : '100 MB Cloud Upload Setup'}
+                        ? 'Hide HD Upload Setup'
+                        : cloudNameInput.trim() && uploadPresetInput.trim()
+                          ? 'HD 100 MB Upload: Ready ✓'
+                          : 'HD 100 MB Upload Setup'}
                     </button>
                   </div>
                   {showVideoCloudSetup && (
                     <div className="p-2.5 rounded-lg bg-white border border-[#BAE6FD] space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-[11px] text-[#335160] leading-relaxed">
-                          Short clips (&le;18s) upload automatically. For <strong>any gallery video up to 100 MB</strong>, connect free <strong>Cloudinary</strong> (25 GB free) once:
+                          Very short clips (&le;8s) fit in HD automatically. For <strong>100% Original HD quality (No Blur, up to 100 MB)</strong>, connect free <strong>Cloudinary</strong> (25 GB free) once:
                         </p>
                         <a
                           href="https://cloudinary.com/users/register_free"
@@ -1015,7 +1018,7 @@ export function AdminPanelModal({
                         onClick={handleSaveVideoCloud}
                         className="px-3 py-1.5 rounded-lg bg-[#059669] text-white text-[11px] font-semibold cursor-pointer"
                       >
-                        Save 100 MB Upload Settings
+                        Save HD Upload Settings
                       </button>
                     </div>
                   )}
@@ -1080,6 +1083,13 @@ export function AdminPanelModal({
                           e.target.value = '';
                           setPVideoFile(null);
                           return;
+                        }
+                        if (
+                          f &&
+                          f.size > MAX_FIRESTORE_BINARY_BYTES &&
+                          (!cloudNameInput.trim() || !uploadPresetInput.trim())
+                        ) {
+                          setShowVideoCloudSetup(true);
                         }
                         setPVideoFile(f);
                       }}
@@ -1277,17 +1287,17 @@ export function AdminPanelModal({
                       className="text-[11px] font-bold text-[#0284C7] hover:underline cursor-pointer shrink-0"
                     >
                       {showVideoCloudSetup
-                        ? 'Hide Cloud Upload Setup'
-                        : cloudNameInput && uploadPresetInput
-                          ? '100 MB Cloud Upload: Ready ✓'
-                          : '100 MB Cloud Upload Setup'}
+                        ? 'Hide HD Upload Setup'
+                        : cloudNameInput.trim() && uploadPresetInput.trim()
+                          ? 'HD 100 MB Upload: Ready ✓'
+                          : 'HD 100 MB Upload Setup'}
                     </button>
                   </div>
                   {showVideoCloudSetup && (
                     <div className="p-2.5 rounded-lg bg-white border border-[#BAE6FD] space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-[11px] text-[#335160] leading-relaxed">
-                          Short clips (&le;18s) upload automatically. For <strong>any gallery video up to 100 MB</strong>, connect free <strong>Cloudinary</strong> (25 GB free) once:
+                          Very short clips (&le;8s) fit in HD automatically. For <strong>100% Original HD quality (No Blur, up to 100 MB)</strong>, connect free <strong>Cloudinary</strong> (25 GB free) once:
                         </p>
                         <a
                           href="https://cloudinary.com/users/register_free"
@@ -1320,7 +1330,7 @@ export function AdminPanelModal({
                         onClick={handleSaveVideoCloud}
                         className="px-3 py-1.5 rounded-lg bg-[#059669] text-white text-[11px] font-semibold cursor-pointer"
                       >
-                        Save 100 MB Upload Settings
+                        Save HD Upload Settings
                       </button>
                     </div>
                   )}
@@ -1371,6 +1381,13 @@ export function AdminPanelModal({
                         e.target.value = '';
                         setVFile(null);
                         return;
+                      }
+                      if (
+                        f &&
+                        f.size > MAX_FIRESTORE_BINARY_BYTES &&
+                        (!cloudNameInput.trim() || !uploadPresetInput.trim())
+                      ) {
+                        setShowVideoCloudSetup(true);
                       }
                       setVFile(f);
                     }}

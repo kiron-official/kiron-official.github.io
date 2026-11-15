@@ -624,9 +624,6 @@ export default function App() {
                 <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight text-balance">
                   MD KIRON MONDAL
                 </h1>
-                <p className="text-xs sm:text-sm font-semibold text-[#047857] mt-0.5">
-                  বাবুনির বাবু &middot; Official Website
-                </p>
                 {state.bio && state.bio.trim() && (
                   <p className="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line">
                     {state.bio}

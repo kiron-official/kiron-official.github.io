@@ -57,7 +57,8 @@ function resolveEnglishDate(raw: unknown, serverTs: unknown): string {
 }
 
 export const MAX_FIRESTORE_MEDIA_CHARS = 430000;
-export const MAX_FIRESTORE_BINARY_BYTES = 500 * 1024;
+export const MAX_FIRESTORE_BINARY_BYTES = 550 * 1024;
+export const MAX_FIRESTORE_VIDEO_DATA_CHARS = 760000;
 export const MAX_GALLERY_VIDEO_BYTES = 100 * 1024 * 1024;
 const SESSION_PASS_KEY = 'kiron_admin_session_pass';
 const VIDEO_CLOUD_CFG_KEY = 'kiron_cloudinary_cfg_v1';
@@ -241,22 +242,24 @@ async function compressShortVideoForFirestore(
       !loaded ||
       !Number.isFinite(video.duration) ||
       video.duration <= 0 ||
-      video.duration > 18
+      video.duration > 8
     ) {
       return null;
     }
 
-    const maxW = 360;
-    const vw = video.videoWidth || 360;
-    const vh = video.videoHeight || 640;
+    const maxW = video.duration <= 5 ? 720 : 540;
+    const vw = video.videoWidth || 720;
+    const vh = video.videoHeight || 1280;
     const scale = Math.min(1, maxW / vw);
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(160, Math.round(vw * scale));
-    canvas.height = Math.max(160, Math.round(vh * scale));
+    canvas.width = Math.max(240, Math.round(vw * scale) & ~1);
+    canvas.height = Math.max(240, Math.round(vh * scale) & ~1);
     const ctx = canvas.getContext('2d');
     if (!ctx || typeof canvas.captureStream !== 'function') return null;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
-    const canvasStream = canvas.captureStream(18);
+    const canvasStream = canvas.captureStream(24);
     const videoElAny = video as HTMLVideoElement & {
       captureStream?: () => MediaStream;
       mozCaptureStream?: () => MediaStream;
@@ -276,6 +279,9 @@ async function compressShortVideoForFirestore(
     }
 
     const mimeCandidates = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp9',
+      'video/mp4;codecs=avc1',
       'video/mp4',
       'video/webm;codecs=vp8,opus',
       'video/webm;codecs=vp8',
@@ -284,8 +290,8 @@ async function compressShortVideoForFirestore(
     const mimeType =
       mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || '';
     const targetBits = Math.min(
-      320000,
-      Math.max(85000, Math.floor((410 * 1024 * 8) / Math.max(2, video.duration)))
+      1800000,
+      Math.max(520000, Math.floor((500 * 1024 * 8) / Math.max(2, video.duration)))
     );
 
     const recorder = new MediaRecorder(canvasStream, {
@@ -362,10 +368,11 @@ async function compressShortVideoForFirestore(
       return null;
     }
 
+    const ext = (blob.type || '').includes('mp4') ? 'clip.mp4' : 'clip.webm';
     const dataUrl = await readDataUrl(
-      new File([blob], 'clip.mp4', { type: blob.type || 'video/webm' })
+      new File([blob], ext, { type: blob.type || 'video/webm' })
     );
-    if (!dataUrl || dataUrl.length > 740000) return null;
+    if (!dataUrl || dataUrl.length > MAX_FIRESTORE_VIDEO_DATA_CHARS) return null;
     onProgress?.(100);
     return dataUrl;
   } finally {
@@ -387,7 +394,7 @@ export async function uploadGalleryVideo(
 
   if (file.size <= MAX_FIRESTORE_BINARY_BYTES) {
     const dataUrl = await readDataUrl(file);
-    if (dataUrl && dataUrl.length <= 740000) {
+    if (dataUrl && dataUrl.length <= MAX_FIRESTORE_VIDEO_DATA_CHARS) {
       onProgress?.(100);
       return dataUrl;
     }
@@ -407,7 +414,7 @@ export async function uploadGalleryVideo(
     return compressed;
   }
 
-  throw new Error('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP');
+  throw new Error('UPLOAD_ERROR:NEEDS_HD_VIDEO_SETUP');
 }
 
 export enum OperationType {

@@ -74,6 +74,7 @@ export interface SocialLinks {
   telegram: string;
   wechat: string;
   youtube: string;
+  instagram: string;
 }
 
 export interface PortalState {
@@ -102,6 +103,7 @@ export const DEFAULT_SOCIALS: SocialLinks = {
   telegram: 'https://telegram.org',
   wechat: 'wxid_ldfisj7p5hjr22',
   youtube: 'https://www.youtube.com',
+  instagram: 'https://www.instagram.com',
 };
 
 export const SERIAL_TABS: { id: MainTabId; label: string; nav: string }[] = [

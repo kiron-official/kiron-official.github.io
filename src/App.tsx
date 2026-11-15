@@ -41,6 +41,7 @@ import {
   SERIAL_TABS,
 } from './types';
 import {
+  formatInstagram,
   formatLikeCount,
   formatTikTok,
   formatWa,
@@ -524,6 +525,12 @@ export default function App() {
       isWeChat: false,
     },
     {
+      name: 'Instagram',
+      url: formatInstagram(state.socials.instagram || ''),
+      cls: 'border-[#F9A8D4] bg-[#FDF2F8] text-[#BE185D] hover:bg-[#FCE7F3]',
+      isWeChat: false,
+    },
+    {
       name: 'WeChat',
       url: state.socials.wechat.trim(),
       cls: 'border-[#6EE7B7] bg-[#ECFDF5] text-[#047857] hover:bg-[#D1FAE5]',
@@ -633,14 +640,14 @@ export default function App() {
             </div>
 
             {socialItems.length > 0 && (
-              <div className="inline-flex flex-nowrap items-center gap-1.5 bg-white/90 border border-[#9ED6C8] rounded-xl p-1.5 self-start lg:self-center max-w-full overflow-x-auto shrink-0">
+              <div className="inline-flex flex-nowrap items-center gap-1 sm:gap-1.5 bg-white/90 border border-[#9ED6C8] rounded-xl p-1 sm:p-1.5 self-start lg:self-center max-w-full overflow-x-auto shrink-0">
                 {socialItems.map((item) =>
                   item.isWeChat && !item.url.startsWith('http') ? (
                     <button
                       key={item.name}
                       type="button"
                       onClick={() => handleCopyWeChat(item.url)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${item.cls}`}
+                      className={`inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${item.cls}`}
                     >
                       <span>
                         {copiedWeChat === item.url ? `Copied: ${item.url}` : 'WeChat'}
@@ -652,7 +659,7 @@ export default function App() {
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${item.cls}`}
+                      className={`inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${item.cls}`}
                     >
                       {item.name}
                     </a>

@@ -45,6 +45,7 @@ function normalizeState(raw: unknown): PortalState {
       telegram: r.socials?.telegram ?? def.socials.telegram,
       wechat: r.socials?.wechat ?? def.socials.wechat,
       youtube: r.socials?.youtube ?? def.socials.youtube,
+      instagram: r.socials?.instagram ?? def.socials.instagram,
     },
     posts: Array.isArray(r.posts) ? r.posts : [],
     photos: Array.isArray(r.photos) ? r.photos : [],

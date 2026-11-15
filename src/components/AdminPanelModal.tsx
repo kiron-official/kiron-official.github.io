@@ -22,6 +22,7 @@ import {
 } from '../types';
 import {
   fmtSize,
+  formatInstagram,
   formatTikTok,
   generateStandaloneHtml,
   makeId,
@@ -642,6 +643,7 @@ export function AdminPanelModal({
           telegram: socialsInput.telegram.trim(),
           wechat: socialsInput.wechat.trim(),
           youtube: (socialsInput.youtube || '').trim(),
+          instagram: formatInstagram(socialsInput.instagram || ''),
         },
       });
       notify('Social links synced live!');
@@ -1828,6 +1830,19 @@ export function AdminPanelModal({
                     setSocialsInput((s) => ({ ...s, youtube: e.target.value }))
                   }
                   placeholder="https://www.youtube.com/@yourchannel"
+                  className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">
+                  Instagram
+                </label>
+                <input
+                  value={socialsInput.instagram || ''}
+                  onChange={(e) =>
+                    setSocialsInput((s) => ({ ...s, instagram: e.target.value }))
+                  }
+                  placeholder="https://www.instagram.com/username or @username"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
               </div>

@@ -69,6 +69,17 @@ export function formatTikTok(val: string): string {
   return handle ? `https://www.tiktok.com/@${handle}` : '';
 }
 
+export function formatInstagram(val: string): string {
+  const t = String(val || '').trim();
+  if (!t) return '';
+  if (t.startsWith('http://') || t.startsWith('https://')) return t;
+  if (/^(www\.)?(instagram\.com|instagr\.am)\//i.test(t)) {
+    return `https://${t}`;
+  }
+  const handle = t.replace(/^@+/, '').replace(/^\/+/, '');
+  return handle ? `https://www.instagram.com/${handle}/` : '';
+}
+
 export function normalizeVideoUrl(url: string): string {
   const trimmed = String(url || '').trim();
   if (!trimmed) return '';
@@ -191,6 +202,7 @@ export function loadState(): PortalState {
         telegram: raw.socials?.telegram ?? DEFAULT_SOCIALS.telegram,
         wechat: raw.socials?.wechat ?? DEFAULT_SOCIALS.wechat,
         youtube: raw.socials?.youtube ?? DEFAULT_SOCIALS.youtube,
+        instagram: raw.socials?.instagram ?? DEFAULT_SOCIALS.instagram,
       },
       posts: Array.isArray(raw.posts) ? raw.posts : [],
       photos: Array.isArray(raw.photos) ? raw.photos : [],
@@ -398,7 +410,8 @@ export function generateStandaloneHtml(state: PortalState): string {
             tiktok: raw.socials?.tiktok ?? BAKED_INITIAL_STATE.socials.tiktok,
             telegram: raw.socials?.telegram ?? BAKED_INITIAL_STATE.socials.telegram,
             wechat: raw.socials?.wechat ?? BAKED_INITIAL_STATE.socials.wechat,
-            youtube: raw.socials?.youtube ?? BAKED_INITIAL_STATE.socials.youtube
+            youtube: raw.socials?.youtube ?? BAKED_INITIAL_STATE.socials.youtube,
+            instagram: raw.socials?.instagram ?? BAKED_INITIAL_STATE.socials.instagram
           },
           posts: Array.isArray(raw.posts) ? raw.posts : BAKED_INITIAL_STATE.posts,
           photos: Array.isArray(raw.photos) ? raw.photos : BAKED_INITIAL_STATE.photos,
@@ -417,6 +430,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     function monthYear() { const d = new Date(); const dd = String(d.getDate()).padStart(2, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0'); const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']; return dd + '.' + mm + '.' + d.getFullYear() + ' - ' + days[d.getDay()]; }
     function formatWa(val) { const t = String(val || '').trim(); if (!t) return ''; if (t.startsWith('http://') || t.startsWith('https://')) return t; const d = t.replace(/[^\\d]/g, ''); return d ? 'https://wa.me/' + d : t; }
     function formatTikTok(val) { const t = String(val || '').trim(); if (!t) return ''; if (t.startsWith('http://') || t.startsWith('https://')) return t; if (/^(www\\.)?(tiktok\\.com|vm\\.tiktok\\.com)\\//i.test(t)) return 'https://' + t; const h = t.replace(/^@+/, '').replace(/^\\/+/, ''); return h ? 'https://www.tiktok.com/@' + h : ''; }
+    function formatInstagram(val) { const t = String(val || '').trim(); if (!t) return ''; if (t.startsWith('http://') || t.startsWith('https://')) return t; if (/^(www\\.)?(instagram\\.com|instagr\\.am)\\//i.test(t)) return 'https://' + t; const h = t.replace(/^@+/, '').replace(/^\\/+/, ''); return h ? 'https://www.instagram.com/' + h + '/' : ''; }
     function ytEmbed(url) { try { const u = new URL(url); if (u.hostname.includes('youtu.be')) { const id = u.pathname.replace('/', '').trim(); return id ? 'https://www.youtube.com/embed/' + id : null; } if (u.hostname.includes('youtube.com')) { if (u.pathname.startsWith('/shorts/')) { const id = u.pathname.split('/shorts/')[1]?.split('/')[0]; return id ? 'https://www.youtube.com/embed/' + id : null; } if (u.pathname.startsWith('/live/')) { const id = u.pathname.split('/live/')[1]?.split('/')[0]; return id ? 'https://www.youtube.com/embed/' + id : null; } if (u.pathname.startsWith('/embed/')) return url; const id = u.searchParams.get('v'); return id ? 'https://www.youtube.com/embed/' + id : null; } } catch {} return null; }
     function readDataUrl(f) { return new Promise((res) => { if (!f) return res(''); const r = new FileReader(); r.onload = () => res(typeof r.result === 'string' ? r.result : ''); r.onerror = () => res(''); r.readAsDataURL(f); }); }
     function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
@@ -430,6 +444,7 @@ export function generateStandaloneHtml(state: PortalState): string {
         { name: 'TikTok', url: formatTikTok(state.socials.tiktok), cls: 'border-[#99D6C9] bg-[#F0FDFA] text-[#0F766E] hover:bg-[#CCFBF1]' },
         { name: 'Telegram', url: state.socials.telegram.trim(), cls: 'border-[#7DD3FC] bg-[#F0F9FF] text-[#0284C7] hover:bg-[#E0F2FE]' },
         { name: 'YouTube', url: (state.socials.youtube || '').trim(), cls: 'border-[#FCA5A5] bg-[#FEF2F2] text-[#DC2626] hover:bg-[#FEE2E2]' },
+        { name: 'Instagram', url: formatInstagram(state.socials.instagram || ''), cls: 'border-[#F9A8D4] bg-[#FDF2F8] text-[#BE185D] hover:bg-[#FCE7F3]' },
         { name: 'WeChat', url: state.socials.wechat.trim(), cls: 'border-[#6EE7B7] bg-[#ECFDF5] text-[#047857] hover:bg-[#D1FAE5]', isWeChat: true }
       ].filter((x) => x.url);
       if (!items.length) { wrap.classList.add('hidden'); return; }
@@ -528,7 +543,7 @@ export function generateStandaloneHtml(state: PortalState): string {
       } else if (adminTab === 'apk') {
         body.innerHTML = '<form onsubmit="addApk(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#0284C7]">APK Manager</h4><div class="grid grid-cols-2 gap-3"><input id="aName" placeholder="App Name" class="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="aVer" value="1.0" placeholder="Version" class="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><input id="aUrl" placeholder="APK Download URL" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="aFile" type="file" accept=".apk,application/vnd.android.package-archive" class="block text-xs" /><textarea id="aDesc" rows="2" placeholder="Description (Optional)" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"></textarea><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Add APK</button></form><div class="pt-4 border-t border-[#DCEFE9] space-y-2">' + state.apks.map((a) => '<div class="py-2 flex items-center justify-between border-b border-[#E2F2EC]"><span class="text-sm font-semibold">' + esc(a.name) + ' v' + esc(a.version) + '</span><button type="button" onclick="delApk(\\'' + esc(a.id) + '\\')" class="px-2.5 py-1 rounded bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete</button></div>').join('') + '</div>';
       } else {
-        body.innerHTML = '<form onsubmit="saveSocials(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#059669]">Social Links</h4><div><label class="block text-xs font-semibold mb-1">Facebook</label><input id="sFb" value="' + esc(state.socials.facebook) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WhatsApp (URL or phone number)</label><input id="sWa" value="' + esc(state.socials.whatsapp) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">TikTok</label><input id="sTt" value="' + esc(state.socials.tiktok) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">Telegram</label><input id="sTg" value="' + esc(state.socials.telegram) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">YouTube</label><input id="sYt" value="' + esc(state.socials.youtube || '') + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WeChat (URL or WeChat ID)</label><input id="sWc" value="' + esc(state.socials.wechat) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Save Social Links</button></form>';
+        body.innerHTML = '<form onsubmit="saveSocials(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#059669]">Social Links</h4><div><label class="block text-xs font-semibold mb-1">Facebook</label><input id="sFb" value="' + esc(state.socials.facebook) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WhatsApp (URL or phone number)</label><input id="sWa" value="' + esc(state.socials.whatsapp) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">TikTok</label><input id="sTt" value="' + esc(state.socials.tiktok) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">Telegram</label><input id="sTg" value="' + esc(state.socials.telegram) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">YouTube</label><input id="sYt" value="' + esc(state.socials.youtube || '') + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">Instagram</label><input id="sIg" value="' + esc(state.socials.instagram || '') + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><div><label class="block text-xs font-semibold mb-1">WeChat (URL or WeChat ID)</label><input id="sWc" value="' + esc(state.socials.wechat) + '" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Save Social Links</button></form>';
       }
     }
     async function uploadAvatar(e) { const f = e.target.files[0]; if (!f) return; state.avatar = await readDataUrl(f); save(); }
@@ -544,7 +559,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     function delPhoto(id) { state.photos = state.photos.filter((g) => g.id !== id); save(); }
     async function addApk(e) { e.preventDefault(); const name = document.getElementById('aName').value.trim(); const version = document.getElementById('aVer').value.trim() || '1.0'; const description = document.getElementById('aDesc').value.trim(); let downloadUrl = document.getElementById('aUrl').value.trim(); let fileName = '', sizeLabel = ''; const file = document.getElementById('aFile').files[0]; if (file) { downloadUrl = await readDataUrl(file); fileName = file.name; sizeLabel = fmtSize(file.size); } if (!downloadUrl) return; state.apks.unshift({ id: makeId('apk'), name: name || fileName.replace(/\\.apk$/i, '') || 'Android App', version, description, downloadUrl, fileName, sizeLabel, createdAt: monthYear() }); save(); }
     function delApk(id) { state.apks = state.apks.filter((a) => a.id !== id); save(); }
-    function saveSocials(e) { e.preventDefault(); state.socials = { facebook: document.getElementById('sFb').value.trim(), whatsapp: document.getElementById('sWa').value.trim(), tiktok: document.getElementById('sTt').value.trim(), telegram: document.getElementById('sTg').value.trim(), youtube: document.getElementById('sYt').value.trim(), wechat: document.getElementById('sWc').value.trim() }; save(); }
+    function saveSocials(e) { e.preventDefault(); state.socials = { facebook: document.getElementById('sFb').value.trim(), whatsapp: document.getElementById('sWa').value.trim(), tiktok: document.getElementById('sTt').value.trim(), telegram: document.getElementById('sTg').value.trim(), youtube: document.getElementById('sYt').value.trim(), instagram: document.getElementById('sIg').value.trim(), wechat: document.getElementById('sWc').value.trim() }; save(); }
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeLightbox(); closeLogin(); closeAdmin(); } else if (e.key === 'ArrowLeft') navLightbox(-1); else if (e.key === 'ArrowRight') navLightbox(1); });
     render();
   </script>

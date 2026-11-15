@@ -588,6 +588,10 @@ export function subscribePublicSiteProfile(
             typeof d.socials?.youtube === 'string'
               ? d.socials.youtube
               : DEFAULT_SOCIALS.youtube,
+          instagram:
+            typeof d.socials?.instagram === 'string'
+              ? d.socials.instagram
+              : DEFAULT_SOCIALS.instagram,
         },
       });
     },
@@ -617,6 +621,7 @@ export async function savePublicSiteProfile(
         telegram: (profile.socials.telegram || '').slice(0, 500),
         wechat: (profile.socials.wechat || '').slice(0, 500),
         youtube: (profile.socials.youtube || '').slice(0, 500),
+        instagram: (profile.socials.instagram || '').slice(0, 500),
       },
       authProof,
       updatedAt: serverTimestamp(),

@@ -95,6 +95,7 @@ export function AdminPanelModal({
   const vFileRef = useRef<HTMLInputElement>(null);
 
   // Photo form
+  const [gTitle, setGTitle] = useState('');
   const [gCap, setGCap] = useState('');
   const [gUrl, setGUrl] = useState('');
   const [gFiles, setGFiles] = useState<File[]>([]);
@@ -446,6 +447,7 @@ export function AdminPanelModal({
     }
     setIsBusy(true);
     try {
+      const title = gTitle.trim();
       const cap = gCap.trim();
       const addedPhotos: PhotoItem[] = [];
 
@@ -454,6 +456,7 @@ export function AdminPanelModal({
         if (img) {
           addedPhotos.push({
             id: makeId('photo'),
+            title,
             img,
             cap,
           });
@@ -462,6 +465,7 @@ export function AdminPanelModal({
       if (urlTrim) {
         addedPhotos.push({
           id: makeId('photo'),
+          title,
           img: urlTrim,
           cap,
         });
@@ -476,6 +480,7 @@ export function AdminPanelModal({
         await onCreatePhoto(item);
       }
 
+      setGTitle('');
       setGCap('');
       setGUrl('');
       setGFiles([]);
@@ -676,6 +681,7 @@ export function AdminPanelModal({
           if (ph.img) {
             await onCreatePhoto({
               id: ph.id || makeId('photo'),
+              title: ph.title || '',
               img: ph.img,
               cap: ph.cap || '',
             });
@@ -1333,6 +1339,12 @@ export function AdminPanelModal({
                 )}
 
                 <input
+                  value={gTitle}
+                  onChange={(e) => setGTitle(e.target.value)}
+                  placeholder="Photo Title"
+                  className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
+                />
+                <input
                   value={gCap}
                   onChange={(e) => setGCap(e.target.value)}
                   placeholder="Caption (Optional)"
@@ -1399,11 +1411,18 @@ export function AdminPanelModal({
                       <div className="flex items-center gap-3 min-w-0">
                         <AdminThumb
                           src={g.img}
-                          alt={g.cap || `Photo ${i + 1}`}
+                          alt={g.title || g.cap || `Photo ${i + 1}`}
                         />
-                        <span className="text-sm text-[#0F2937] truncate">
-                          {g.cap || `Photo ${i + 1}`}
-                        </span>
+                        <div className="min-w-0">
+                          <span className="block text-sm font-semibold text-[#0F2937] truncate">
+                            {g.title || g.cap || `Photo ${i + 1}`}
+                          </span>
+                          {g.title && g.cap && (
+                            <span className="block text-xs text-[#4A6B7A] truncate">
+                              {g.cap}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <button
                         type="button"

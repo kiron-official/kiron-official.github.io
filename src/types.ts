@@ -30,8 +30,17 @@ export interface PostItem {
 
 export interface PhotoItem {
   id: string;
+  title?: string;
   img: string;
   cap?: string;
+}
+
+export type LikeCollectionName = 'posts' | 'photos' | 'videos';
+
+export interface LikeInfo {
+  count: number;
+  liked: boolean;
+  hasDoc: boolean;
 }
 
 export interface VideoItem {

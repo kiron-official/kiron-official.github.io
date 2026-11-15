@@ -9,6 +9,27 @@ export function makeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+const VISITOR_ID_KEY = 'kiron_visitor_id_v1';
+let memoryVisitorId = '';
+
+export function getVisitorId(): string {
+  if (memoryVisitorId) return memoryVisitorId;
+  try {
+    const existing = localStorage.getItem(VISITOR_ID_KEY);
+    if (existing && /^[a-zA-Z0-9_\-]{6,120}$/.test(existing)) {
+      memoryVisitorId = existing;
+      return existing;
+    }
+    const created = `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(VISITOR_ID_KEY, created);
+    memoryVisitorId = created;
+    return created;
+  } catch {
+    memoryVisitorId = `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    return memoryVisitorId;
+  }
+}
+
 export function formatEnglishPostDate(date: Date = new Date()): string {
   const dd = String(date.getDate()).padStart(2, '0');
   const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -426,7 +447,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     }
     function renderPhotos() {
       if (!state.photos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No photos added yet.</p></div>';
-      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.cap || 'Photo') + '" class="w-full h-auto block transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + (g.cap ? '<figcaption class="px-3.5 py-2.5 text-[13.5px] text-[#17465A]">' + esc(g.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div>';
+      return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">' + state.photos.map((g, i) => '<figure class="bg-white border border-[#A7DFD2] rounded-xl overflow-hidden group"><button type="button" onclick="openGalleryLightbox(' + i + ')" class="block w-full overflow-hidden cursor-pointer"><img src="' + g.img + '" alt="' + esc(g.title || g.cap || 'Photo') + '" class="w-full h-auto block transition-transform duration-200 group-hover:scale-[1.02]" /></button>' + ((g.title || g.cap) ? '<figcaption class="px-3.5 py-2.5 space-y-0.5">' + (g.title ? '<div class="text-[15.5px] font-bold text-[#0F2937] leading-snug">' + esc(g.title) + '</div>' : '') + (g.cap ? '<div class="text-[13.5px] text-[#335160]">' + esc(g.cap) + '</div>' : '') + '</figcaption>' : '') + '</figure>').join('') + '</div>';
     }
     function renderVideos() {
       if (!state.videos.length) return '<div class="bg-white border border-[#B4D8EC] rounded-2xl p-10 text-center"><p class="text-sm text-[#335160]">No videos added yet.</p></div>';
@@ -471,7 +492,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     }
     function toggleCmt(id) { openComments[id] = !openComments[id]; render(); }
     function addCmt(e, id) { e.preventDefault(); const text = document.getElementById('ct-' + id).value.trim(); if (!text) return; const author = document.getElementById('ca-' + id).value.trim() || 'Visitor'; const p = state.posts.find((x) => x.id === id); if (!p) return; p.comments = p.comments || []; p.comments.push({ id: makeId('cmt'), author, text }); openComments[id] = true; save(); }
-    function openGalleryLightbox(i) { lbSlides = state.photos.map((g, idx) => ({ src: g.img, cap: g.cap || 'Photo ' + (idx + 1) })); lbIndex = i; showLightbox(); }
+    function openGalleryLightbox(i) { lbSlides = state.photos.map((g, idx) => ({ src: g.img, cap: [g.title, g.cap].filter(Boolean).join(' — ') || 'Photo ' + (idx + 1) })); lbIndex = i; showLightbox(); }
     function openSingleLightbox(postIdx) { const p = state.posts[postIdx]; if (!p || !p.img) return; lbSlides = [{ src: p.img, cap: p.title }]; lbIndex = 0; showLightbox(); }
     function showLightbox() { const m = document.getElementById('lightboxModal'); const cur = lbSlides[lbIndex]; if (!cur) return; document.getElementById('lbImg').src = cur.src; document.getElementById('lbCap').textContent = cur.cap; document.getElementById('lbCount').textContent = lbSlides.length > 1 ? (lbIndex + 1) + ' / ' + lbSlides.length : ''; document.getElementById('lbPrev').style.display = lbSlides.length > 1 ? 'flex' : 'none'; document.getElementById('lbNext').style.display = lbSlides.length > 1 ? 'flex' : 'none'; m.classList.remove('hidden'); m.classList.add('flex'); }
     function navLightbox(dir) { if (lbSlides.length < 2) return; lbIndex = (lbIndex + dir + lbSlides.length) % lbSlides.length; showLightbox(); }
@@ -493,7 +514,7 @@ export function generateStandaloneHtml(state: PortalState): string {
       } else if (adminTab === 'videos') {
         body.innerHTML = '<form onsubmit="addVideo(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#0284C7]">Videos Manager</h4><input id="vTitle" placeholder="Video Title" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="vUrl" placeholder="YouTube or Video URL" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="vFile" type="file" accept="video/*" class="block text-xs" /><textarea id="vDesc" rows="2" placeholder="Description (Optional)" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"></textarea><button type="submit" class="px-4 py-2 rounded-lg bg-[#0284C7] text-white text-xs font-semibold cursor-pointer">Add Video</button></form><div class="pt-4 border-t border-[#DCEFE9] space-y-2">' + state.videos.map((v) => '<div class="py-2 flex items-center justify-between border-b border-[#E2F2EC]"><span class="text-sm font-semibold">' + esc(v.title) + '</span><button type="button" onclick="delVideo(\\'' + esc(v.id) + '\\')" class="px-2.5 py-1 rounded bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete</button></div>').join('') + '</div>';
       } else if (adminTab === 'photos') {
-        body.innerHTML = '<form onsubmit="addPhoto(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#059669]">Photos Manager</h4><input id="gCap" placeholder="Caption (Optional)" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="gFile" type="file" accept="image/*" class="block text-xs" /><button type="submit" class="px-4 py-2 rounded-lg bg-[#059669] text-white text-xs font-semibold cursor-pointer">Add Photo</button></form><div class="pt-4 border-t border-[#DCEFE9] space-y-2">' + state.photos.map((g, i) => '<div class="py-2 flex items-center justify-between border-b border-[#E2F2EC]"><span class="text-sm">' + esc(g.cap || 'Photo ' + (i + 1)) + '</span><button type="button" onclick="delPhoto(\\'' + esc(g.id) + '\\')" class="px-2.5 py-1 rounded bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete</button></div>').join('') + '</div>';
+        body.innerHTML = '<form onsubmit="addPhoto(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#059669]">Photos Manager</h4><input id="gTitle" placeholder="Photo Title (Optional)" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="gCap" placeholder="Caption (Optional)" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="gFile" type="file" accept="image/*" class="block text-xs" /><button type="submit" class="px-4 py-2 rounded-lg bg-[#059669] text-white text-xs font-semibold cursor-pointer">Add Photo</button></form><div class="pt-4 border-t border-[#DCEFE9] space-y-2">' + state.photos.map((g, i) => '<div class="py-2 flex items-center justify-between border-b border-[#E2F2EC]"><span class="text-sm">' + esc(g.title || g.cap || 'Photo ' + (i + 1)) + '</span><button type="button" onclick="delPhoto(\\'' + esc(g.id) + '\\')" class="px-2.5 py-1 rounded bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete</button></div>').join('') + '</div>';
       } else if (adminTab === 'apk') {
         body.innerHTML = '<form onsubmit="addApk(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#0284C7]">APK Manager</h4><div class="grid grid-cols-2 gap-3"><input id="aName" placeholder="App Name" class="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="aVer" value="1.0" placeholder="Version" class="px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /></div><input id="aUrl" placeholder="APK Download URL" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><input id="aFile" type="file" accept=".apk,application/vnd.android.package-archive" class="block text-xs" /><textarea id="aDesc" rows="2" placeholder="Description (Optional)" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"></textarea><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Add APK</button></form><div class="pt-4 border-t border-[#DCEFE9] space-y-2">' + state.apks.map((a) => '<div class="py-2 flex items-center justify-between border-b border-[#E2F2EC]"><span class="text-sm font-semibold">' + esc(a.name) + ' v' + esc(a.version) + '</span><button type="button" onclick="delApk(\\'' + esc(a.id) + '\\')" class="px-2.5 py-1 rounded bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete</button></div>').join('') + '</div>';
       } else {
@@ -509,7 +530,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     function delCmt(pid, cid) { const p = state.posts.find((x) => x.id === pid); if (p) p.comments = (p.comments || []).filter((c) => c.id !== cid); save(); }
     async function addVideo(e) { e.preventDefault(); const title = document.getElementById('vTitle').value.trim(); let url = document.getElementById('vUrl').value.trim(); const description = document.getElementById('vDesc').value.trim(); const file = document.getElementById('vFile').files[0]; if (!url && file) url = await readDataUrl(file); if (!url) return; state.videos.unshift({ id: makeId('video'), title: title || 'New Video', url, description, createdAt: monthYear() }); save(); }
     function delVideo(id) { state.videos = state.videos.filter((v) => v.id !== id); save(); }
-    async function addPhoto(e) { e.preventDefault(); const file = document.getElementById('gFile').files[0]; const cap = document.getElementById('gCap').value.trim(); if (!file) return; const img = await readDataUrl(file); if (!img) return; state.photos.unshift({ id: makeId('photo'), img, cap }); save(); }
+    async function addPhoto(e) { e.preventDefault(); const file = document.getElementById('gFile').files[0]; const title = document.getElementById('gTitle').value.trim(); const cap = document.getElementById('gCap').value.trim(); if (!file) return; const img = await readDataUrl(file); if (!img) return; state.photos.unshift({ id: makeId('photo'), title, img, cap }); save(); }
     function delPhoto(id) { state.photos = state.photos.filter((g) => g.id !== id); save(); }
     async function addApk(e) { e.preventDefault(); const name = document.getElementById('aName').value.trim(); const version = document.getElementById('aVer').value.trim() || '1.0'; const description = document.getElementById('aDesc').value.trim(); let downloadUrl = document.getElementById('aUrl').value.trim(); let fileName = '', sizeLabel = ''; const file = document.getElementById('aFile').files[0]; if (file) { downloadUrl = await readDataUrl(file); fileName = file.name; sizeLabel = fmtSize(file.size); } if (!downloadUrl) return; state.apks.unshift({ id: makeId('apk'), name: name || fileName.replace(/\\.apk$/i, '') || 'Android App', version, description, downloadUrl, fileName, sizeLabel, createdAt: monthYear() }); save(); }
     function delApk(id) { state.apks = state.apks.filter((a) => a.id !== id); save(); }

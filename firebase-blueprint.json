@@ -200,6 +200,11 @@
           "maxLength": 128,
           "description": "Unique photo ID"
         },
+        "title": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Optional photo title"
+        },
         "img": {
           "type": "string",
           "minLength": 1,
@@ -228,6 +233,34 @@
         }
       },
       "required": ["id", "img", "cap", "deleted", "authProof", "createdServerAt"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "A public visitor like record on a post, photo, or video.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Visitor like ID"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether the like is currently active"
+        },
+        "createdServerAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": ["id", "active", "createdServerAt", "updatedAt"]
     },
     "Video": {
       "title": "Video",
@@ -391,13 +424,25 @@
       "schema": { "$ref": "#/entities/Comment" },
       "description": "Public visitor comments on a specific post."
     },
+    "/posts/{postId}/likes/{likeId}": {
+      "schema": { "$ref": "#/entities/Like" },
+      "description": "Public visitor likes on a specific post."
+    },
     "/photos/{photoId}": {
       "schema": { "$ref": "#/entities/Photo" },
       "description": "Gallery photos published by the admin."
     },
+    "/photos/{photoId}/likes/{likeId}": {
+      "schema": { "$ref": "#/entities/Like" },
+      "description": "Public visitor likes on a specific photo."
+    },
     "/videos/{videoId}": {
       "schema": { "$ref": "#/entities/Video" },
       "description": "Videos published by the admin."
+    },
+    "/videos/{videoId}/likes/{likeId}": {
+      "schema": { "$ref": "#/entities/Like" },
+      "description": "Public visitor likes on a specific video."
     },
     "/apks/{apkId}": {
       "schema": { "$ref": "#/entities/Apk" },

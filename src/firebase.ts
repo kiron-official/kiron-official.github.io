@@ -19,6 +19,8 @@ import {
   ApkItem,
   CommentItem,
   DEFAULT_SOCIALS,
+  LikeCollectionName,
+  LikeInfo,
   PhotoItem,
   PostCategory,
   PostItem,
@@ -428,6 +430,7 @@ export function subscribePhotos(
           const d = docSnap.data();
           return {
             id: typeof d.id === 'string' ? d.id : docSnap.id,
+            title: typeof d.title === 'string' ? d.title : '',
             img: typeof d.img === 'string' ? d.img : '',
             cap: typeof d.cap === 'string' ? d.cap : '',
           };
@@ -450,6 +453,7 @@ export async function createCloudPhoto(photo: PhotoItem): Promise<void> {
     const authProof = await requireAuthProof(photo.id);
     await setDoc(doc(db, 'photos', photo.id), {
       id: photo.id,
+      title: (photo.title || '').slice(0, 200),
       img: (photo.img || '').slice(0, 450000),
       cap: (photo.cap || '').slice(0, 300),
       deleted: false,
@@ -458,6 +462,65 @@ export async function createCloudPhoto(photo: PhotoItem): Promise<void> {
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
+  }
+}
+
+export function subscribeCollectionLikes(
+  collectionName: LikeCollectionName,
+  docId: string,
+  visitorId: string,
+  onData: (info: LikeInfo) => void
+): Unsubscribe {
+  const path = `${collectionName}/${docId}/likes`;
+  return onSnapshot(
+    collection(db, collectionName, docId, 'likes'),
+    (snap) => {
+      let count = 0;
+      let liked = false;
+      let hasDoc = false;
+      snap.docs.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (docSnap.id === visitorId) {
+          hasDoc = true;
+          if (d.active === true) liked = true;
+        }
+        if (d.active === true) {
+          count += 1;
+        }
+      });
+      onData({ count, liked, hasDoc });
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
+}
+
+export async function toggleCloudLike(
+  collectionName: LikeCollectionName,
+  docId: string,
+  visitorId: string,
+  nextLiked: boolean,
+  hasExistingDoc: boolean
+): Promise<void> {
+  const path = `${collectionName}/${docId}/likes/${visitorId}`;
+  const likeRef = doc(db, collectionName, docId, 'likes', visitorId);
+  try {
+    if (!hasExistingDoc) {
+      await setDoc(likeRef, {
+        id: visitorId,
+        active: true,
+        createdServerAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    } else {
+      await updateDoc(likeRef, {
+        active: nextLiked,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 }
 

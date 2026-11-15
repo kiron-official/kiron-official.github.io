@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AdminPanelModal } from './components/AdminPanelModal';
 import { LightboxModal } from './components/LightboxModal';
 import { useMediaUrl } from './db';
@@ -18,18 +18,22 @@ import {
   restoreAdminSession,
   savePublicSiteProfile,
   subscribeApks,
+  subscribeCollectionLikes,
   subscribePhotos,
   subscribePostComments,
   subscribePosts,
   subscribePublicSiteProfile,
   subscribeVideos,
   testConnection,
+  toggleCloudLike,
   verifyAdminPasscode,
 } from './firebase';
 import {
   AdminTabId,
   CommentItem,
   LightboxSlide,
+  LikeCollectionName,
+  LikeInfo,
   MainTabId,
   PortalState,
   PostItem,
@@ -39,6 +43,7 @@ import {
   formatTikTok,
   formatWa,
   getDefaultState,
+  getVisitorId,
   makeId,
   normalizeApkDownloadUrl,
   normalizeVideoUrl,
@@ -166,6 +171,43 @@ function ExpandableBody({
   );
 }
 
+function LikeButton({
+  info,
+  onToggle,
+}: {
+  info?: LikeInfo;
+  onToggle: () => void;
+}) {
+  const liked = !!info?.liked;
+  const count = info?.count ?? 0;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={liked}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+        liked
+          ? 'border-[#FDA4AF] bg-[#FFF1F2] text-[#E11D48] hover:bg-[#FFE4E6]'
+          : 'border-[#BCE2D6] bg-[#F4FBF8] text-[#17465A] hover:bg-[#E6F7F1]'
+      }`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="w-3.5 h-3.5 shrink-0"
+        fill={liked ? '#E11D48' : 'none'}
+        stroke={liked ? '#E11D48' : 'currentColor'}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+      <span>{count > 0 ? `Like (${count})` : 'Like'}</span>
+    </button>
+  );
+}
+
 export default function App() {
   const [profile, setProfile] = useState<PublicSiteProfile>(() => {
     const def = getDefaultState();
@@ -204,6 +246,9 @@ export default function App() {
   const [wechatModalId, setWechatModalId] = useState<string | null>(null);
   const [avatarBroken, setAvatarBroken] = useState(false);
 
+  const visitorId = useMemo(() => getVisitorId(), []);
+  const [likesByKey, setLikesByKey] = useState<Record<string, LikeInfo>>({});
+
   const passInputRef = useRef<HTMLInputElement>(null);
   const resolvedAvatar = useMediaUrl(profile.avatar);
 
@@ -231,20 +276,58 @@ export default function App() {
     };
   }, []);
 
-  // Real-time comment listeners per post
+  // Real-time comment & like listeners per post
   const postIdsKey = rawPosts.map((p) => p.id).join(',');
   useEffect(() => {
     if (!postIdsKey) return;
     const ids = postIdsKey.split(',').filter(Boolean);
-    const unsubs = ids.map((postId) =>
-      subscribePostComments(postId, (cmts) => {
-        setCommentsByPost((prev) => ({ ...prev, [postId]: cmts }));
+    const unsubs: (() => void)[] = [];
+    ids.forEach((postId) => {
+      unsubs.push(
+        subscribePostComments(postId, (cmts) => {
+          setCommentsByPost((prev) => ({ ...prev, [postId]: cmts }));
+        })
+      );
+      unsubs.push(
+        subscribeCollectionLikes('posts', postId, visitorId, (info) => {
+          setLikesByKey((prev) => ({ ...prev, [`posts:${postId}`]: info }));
+        })
+      );
+    });
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+  }, [postIdsKey, visitorId]);
+
+  // Real-time like listeners per photo
+  const photoIdsKey = photos.map((p) => p.id).join(',');
+  useEffect(() => {
+    if (!photoIdsKey) return;
+    const ids = photoIdsKey.split(',').filter(Boolean);
+    const unsubs = ids.map((photoId) =>
+      subscribeCollectionLikes('photos', photoId, visitorId, (info) => {
+        setLikesByKey((prev) => ({ ...prev, [`photos:${photoId}`]: info }));
       })
     );
     return () => {
       unsubs.forEach((u) => u());
     };
-  }, [postIdsKey]);
+  }, [photoIdsKey, visitorId]);
+
+  // Real-time like listeners per video
+  const videoIdsKey = videos.map((v) => v.id).join(',');
+  useEffect(() => {
+    if (!videoIdsKey) return;
+    const ids = videoIdsKey.split(',').filter(Boolean);
+    const unsubs = ids.map((videoId) =>
+      subscribeCollectionLikes('videos', videoId, visitorId, (info) => {
+        setLikesByKey((prev) => ({ ...prev, [`videos:${videoId}`]: info }));
+      })
+    );
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+  }, [videoIdsKey, visitorId]);
 
   const posts: PostItem[] = rawPosts.map((p) => ({
     ...p,
@@ -362,6 +445,27 @@ export default function App() {
     });
   };
 
+  const handleToggleLike = async (col: LikeCollectionName, docId: string) => {
+    const key = `${col}:${docId}`;
+    const current: LikeInfo = likesByKey[key] || {
+      count: 0,
+      liked: false,
+      hasDoc: false,
+    };
+    const nextLiked = !current.liked;
+    const optimistic: LikeInfo = {
+      count: Math.max(0, current.count + (nextLiked ? 1 : -1)),
+      liked: nextLiked,
+      hasDoc: current.hasDoc,
+    };
+    setLikesByKey((prev) => ({ ...prev, [key]: optimistic }));
+    try {
+      await toggleCloudLike(col, docId, visitorId, nextLiked, current.hasDoc);
+    } catch {
+      setLikesByKey((prev) => ({ ...prev, [key]: current }));
+    }
+  };
+
   const openSingleLightbox = (postIdx: number) => {
     const p = state.posts[postIdx];
     if (!p || !p.img) return;
@@ -374,7 +478,8 @@ export default function App() {
     setLightboxSlides(
       state.photos.map((g, idx) => ({
         src: g.img,
-        cap: g.cap || `Photo ${idx + 1}`,
+        cap:
+          [g.title, g.cap].filter(Boolean).join(' — ') || `Photo ${idx + 1}`,
       }))
     );
     setLightboxIndex(photoIdx);
@@ -674,7 +779,11 @@ export default function App() {
                               />
                             )}
 
-                            <div className="mt-auto pt-2.5 border-t border-[#E4F3EE]">
+                            <div className="mt-auto pt-2.5 border-t border-[#E4F3EE] flex flex-wrap items-center gap-2">
+                              <LikeButton
+                                info={likesByKey[`posts:${p.id}`]}
+                                onToggle={() => void handleToggleLike('posts', p.id)}
+                              />
                               <button
                                 type="button"
                                 onClick={() =>
@@ -775,7 +884,7 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
                     {state.photos.map((g, i) => (
                       <figure
                         key={g.id}
@@ -788,13 +897,28 @@ export default function App() {
                         >
                           <ResolvedImage
                             src={g.img}
-                            alt={g.cap || 'Photo'}
+                            alt={g.title || g.cap || 'Photo'}
                             className="w-full h-auto block transition-transform duration-200 group-hover:scale-[1.02]"
                           />
                         </button>
-                        {(g.cap || isAuthenticated) && (
-                          <figcaption className="px-3.5 py-2.5 text-[13.5px] text-[#17465A] flex items-center justify-between gap-2 mt-auto">
-                            <span className="truncate">{g.cap || ''}</span>
+                        <div className="p-3.5 flex-1 flex flex-col">
+                          {g.title && (
+                            <h3 className="text-[15.5px] font-bold text-[#0F2937] leading-snug line-clamp-2 mb-1">
+                              {g.title}
+                            </h3>
+                          )}
+                          {g.cap && (
+                            <figcaption className="text-[13.5px] text-[#335160] leading-relaxed mb-2.5">
+                              {g.cap}
+                            </figcaption>
+                          )}
+                          <div className="mt-auto pt-2.5 border-t border-[#E4F3EE] flex items-center justify-between gap-2">
+                            <LikeButton
+                              info={likesByKey[`photos:${g.id}`]}
+                              onToggle={() =>
+                                void handleToggleLike('photos', g.id)
+                              }
+                            />
                             {isAuthenticated && (
                               <button
                                 type="button"
@@ -804,8 +928,8 @@ export default function App() {
                                 Delete
                               </button>
                             )}
-                          </figcaption>
-                        )}
+                          </div>
+                        </div>
                       </figure>
                     ))}
                   </div>
@@ -851,10 +975,18 @@ export default function App() {
                             {v.title}
                           </h3>
                           {v.description && (
-                            <p className="mt-1 text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line line-clamp-4">
+                            <p className="mt-1 mb-2.5 text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line line-clamp-4">
                               {v.description}
                             </p>
                           )}
+                          <div className="mt-auto pt-2.5 border-t border-[#E4F3EE]">
+                            <LikeButton
+                              info={likesByKey[`videos:${v.id}`]}
+                              onToggle={() =>
+                                void handleToggleLike('videos', v.id)
+                              }
+                            />
+                          </div>
                         </div>
                       </article>
                     ))}
@@ -963,7 +1095,7 @@ export default function App() {
                             <ExpandableBody
                               text={item.body}
                               isExpanded={isExpanded}
-                              wrapperClassName=""
+                              wrapperClassName="mb-2.5"
                               onToggle={() =>
                                 setExpandedPosts((prev) => ({
                                   ...prev,
@@ -972,6 +1104,14 @@ export default function App() {
                               }
                             />
                           )}
+                          <div className="mt-auto pt-2.5 border-t border-[#E4F3EE]">
+                            <LikeButton
+                              info={likesByKey[`posts:${item.id}`]}
+                              onToggle={() =>
+                                void handleToggleLike('posts', item.id)
+                              }
+                            />
+                          </div>
                         </article>
                       );
                     })}

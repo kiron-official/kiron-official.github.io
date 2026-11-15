@@ -91,14 +91,25 @@ service cloud.firestore {
 
     function isValidPhoto(data, photoId) {
       return data.keys().hasAll(['id', 'img', 'cap', 'deleted', 'authProof', 'createdServerAt'])
-        && data.keys().hasOnly(['id', 'img', 'cap', 'deleted', 'authProof', 'createdServerAt'])
+        && data.keys().hasOnly(['id', 'title', 'img', 'cap', 'deleted', 'authProof', 'createdServerAt'])
         && data.id == photoId
         && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && (!('title' in data) || (data.title is string && data.title.size() <= 200))
         && data.img is string && data.img.size() >= 1 && data.img.size() <= 450000
         && data.cap is string && data.cap.size() <= 300
         && data.deleted is bool
         && data.authProof is string && data.authProof.size() == 64
         && data.createdServerAt is timestamp;
+    }
+
+    function isValidLike(data, likeId) {
+      return data.keys().hasAll(['id', 'active', 'createdServerAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'active', 'createdServerAt', 'updatedAt'])
+        && data.id == likeId
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.active is bool
+        && data.createdServerAt is timestamp
+        && data.updatedAt is timestamp;
     }
 
     function isValidVideo(data, videoId) {
@@ -197,6 +208,27 @@ service cloud.firestore {
           && (hasValidProof(incoming().authProof, commentId + ':delete') || isAdminUser());
         allow delete: if false;
       }
+
+      match /likes/{likeId} {
+        allow get: if isValidId(postId) && isValidId(likeId);
+        allow list: if isValidId(postId);
+        allow create: if isValidId(postId)
+          && isValidId(likeId)
+          && isValidLike(incoming(), likeId)
+          && incoming().active == true
+          && incoming().createdServerAt == request.time
+          && incoming().updatedAt == request.time
+          && get(/databases/$(database)/documents/posts/$(postId)).data.deleted == false;
+        allow update: if isValidId(postId)
+          && isValidId(likeId)
+          && isValidLike(incoming(), likeId)
+          && incoming().id == existing().id
+          && incoming().createdServerAt == existing().createdServerAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['active', 'updatedAt'])
+          && get(/databases/$(database)/documents/posts/$(postId)).data.deleted == false;
+        allow delete: if false;
+      }
     }
 
     match /photos/{photoId} {
@@ -210,6 +242,7 @@ service cloud.firestore {
       allow update: if isValidId(photoId)
         && isValidPhoto(incoming(), photoId)
         && incoming().id == existing().id
+        && (!('title' in existing()) || incoming().title == existing().title)
         && incoming().img == existing().img
         && incoming().cap == existing().cap
         && incoming().createdServerAt == existing().createdServerAt
@@ -217,6 +250,27 @@ service cloud.firestore {
         && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof'])
         && (hasValidProof(incoming().authProof, photoId + ':delete') || isAdminUser());
       allow delete: if false;
+
+      match /likes/{likeId} {
+        allow get: if isValidId(photoId) && isValidId(likeId);
+        allow list: if isValidId(photoId);
+        allow create: if isValidId(photoId)
+          && isValidId(likeId)
+          && isValidLike(incoming(), likeId)
+          && incoming().active == true
+          && incoming().createdServerAt == request.time
+          && incoming().updatedAt == request.time
+          && get(/databases/$(database)/documents/photos/$(photoId)).data.deleted == false;
+        allow update: if isValidId(photoId)
+          && isValidId(likeId)
+          && isValidLike(incoming(), likeId)
+          && incoming().id == existing().id
+          && incoming().createdServerAt == existing().createdServerAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['active', 'updatedAt'])
+          && get(/databases/$(database)/documents/photos/$(photoId)).data.deleted == false;
+        allow delete: if false;
+      }
     }
 
     match /videos/{videoId} {
@@ -239,6 +293,27 @@ service cloud.firestore {
         && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof'])
         && (hasValidProof(incoming().authProof, videoId + ':delete') || isAdminUser());
       allow delete: if false;
+
+      match /likes/{likeId} {
+        allow get: if isValidId(videoId) && isValidId(likeId);
+        allow list: if isValidId(videoId);
+        allow create: if isValidId(videoId)
+          && isValidId(likeId)
+          && isValidLike(incoming(), likeId)
+          && incoming().active == true
+          && incoming().createdServerAt == request.time
+          && incoming().updatedAt == request.time
+          && get(/databases/$(database)/documents/videos/$(videoId)).data.deleted == false;
+        allow update: if isValidId(videoId)
+          && isValidId(likeId)
+          && isValidLike(incoming(), likeId)
+          && incoming().id == existing().id
+          && incoming().createdServerAt == existing().createdServerAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['active', 'updatedAt'])
+          && get(/databases/$(database)/documents/videos/$(videoId)).data.deleted == false;
+        allow delete: if false;
+      }
     }
 
     match /apks/{apkId} {

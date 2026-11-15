@@ -83,7 +83,9 @@ function ResolvedVideoPlayer({
   const isDirectVideo =
     cleanUrl.startsWith('idb:') ||
     cleanUrl.startsWith('data:video/') ||
-    /\.(mp4|webm|ogg|mov|m4v|mkv|3gp)(\?|$)/i.test(cleanUrl);
+    /\.(mp4|webm|ogg|mov|m4v|mkv|3gp)(\?|$)/i.test(cleanUrl) ||
+    /^https:\/\/firebasestorage\.googleapis\.com\/.*\/o\/videos/i.test(cleanUrl) ||
+    /^https:\/\/res\.cloudinary\.com\/.*\/video\/upload\//i.test(cleanUrl);
 
   if (yt) {
     return (

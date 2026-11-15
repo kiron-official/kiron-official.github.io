@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { compressImageFile, useMediaUrl } from '../db';
 import {
+  getVideoCloudConfig,
   MAX_FIRESTORE_BINARY_BYTES,
   MAX_FIRESTORE_MEDIA_CHARS,
+  MAX_GALLERY_VIDEO_BYTES,
   PublicSiteProfile,
+  saveVideoCloudConfig,
+  uploadGalleryVideo,
 } from '../firebase';
 import {
   ADMIN_TABS,
@@ -123,6 +127,14 @@ export function AdminPanelModal({
     isError?: boolean;
   } | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [showVideoCloudSetup, setShowVideoCloudSetup] = useState(false);
+  const [cloudNameInput, setCloudNameInput] = useState(
+    () => getVideoCloudConfig().cloudName
+  );
+  const [uploadPresetInput, setUploadPresetInput] = useState(
+    () => getVideoCloudConfig().uploadPreset
+  );
   const [confirmClear, setConfirmClear] = useState<string | null>(null);
 
   const resolvedAvatar = useMediaUrl(state.avatar);
@@ -169,6 +181,13 @@ export function AdminPanelModal({
 
   const formatActionError = (err: unknown): string => {
     const msg = err instanceof Error ? err.message : String(err);
+    if (msg.startsWith('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP')) {
+      setShowVideoCloudSetup(true);
+      return 'Videos over 500 KB need Cloud Video Setup below (enter free Cloudinary Cloud Name + Unsigned Preset once, or enable Firebase Storage).';
+    }
+    if (msg.startsWith('UPLOAD_ERROR:')) {
+      return msg.slice('UPLOAD_ERROR:'.length).trim();
+    }
     if (msg.includes('Quota exceeded')) {
       return 'Daily database quota exceeded. Please try again tomorrow.';
     }
@@ -176,6 +195,20 @@ export function AdminPanelModal({
       return 'Admin permission denied. Lock and unlock KIRON panel with password.';
     }
     return 'Could not sync update to cloud. Check connection and try again.';
+  };
+
+  const handleSaveVideoCloud = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveVideoCloudConfig({
+      cloudName: cloudNameInput,
+      uploadPreset: uploadPresetInput,
+    });
+    if (cloudNameInput.trim() && uploadPresetInput.trim()) {
+      notify('100 MB gallery video upload configured!');
+      setShowVideoCloudSetup(false);
+    } else {
+      notify('Cloud video settings cleared.');
+    }
   };
 
   const compressForCloud = async (file: File): Promise<string> => {
@@ -271,9 +304,9 @@ export function AdminPanelModal({
       notify('Please enter text or choose a photo/video.', true);
       return;
     }
-    if (!videoUrlInput && pVideoFile && pVideoFile.size > MAX_FIRESTORE_BINARY_BYTES) {
+    if (!videoUrlInput && pVideoFile && pVideoFile.size > MAX_GALLERY_VIDEO_BYTES) {
       notify(
-        `Video file is ${fmtSize(pVideoFile.size)}. Direct file upload supports clips up to 500 KB—upload HD/long videos to YouTube or Google Drive and paste the link above.`,
+        `Video file is ${fmtSize(pVideoFile.size)}. Maximum gallery upload size is 100 MB.`,
         true
       );
       return;
@@ -292,11 +325,10 @@ export function AdminPanelModal({
 
       let videoUrl = videoUrlInput ? normalizeVideoUrl(videoUrlInput) : '';
       if (!videoUrl && pVideoFile) {
-        videoUrl = await readDataUrl(pVideoFile);
-      }
-      if (videoUrl && videoUrl.length > 740000) {
-        notify('Selected video exceeds live sync size limit. Use a YouTube/Google Drive/HD video URL instead.', true);
-        return;
+        setUploadProgress(0);
+        videoUrl = await uploadGalleryVideo(pVideoFile, (pct) =>
+          setUploadProgress(pct)
+        );
       }
 
       const fallbackTitle = videoUrl
@@ -327,6 +359,7 @@ export function AdminPanelModal({
     } catch (err) {
       notify(formatActionError(err), true);
     } finally {
+      setUploadProgress(null);
       setIsBusy(false);
     }
   };
@@ -372,12 +405,12 @@ export function AdminPanelModal({
     e.preventDefault();
     let url = vUrl.trim() ? normalizeVideoUrl(vUrl.trim()) : '';
     if (!url && !vFile) {
-      notify('Please paste a YouTube/Google Drive/GitHub Release video URL or choose a small clip.', true);
+      notify('Please choose a video (up to 100 MB) from gallery or paste a video URL.', true);
       return;
     }
-    if (!url && vFile && vFile.size > MAX_FIRESTORE_BINARY_BYTES) {
+    if (!url && vFile && vFile.size > MAX_GALLERY_VIDEO_BYTES) {
       notify(
-        `Video file is ${fmtSize(vFile.size)}. Direct file upload supports up to 500 KB—upload 500 MB / 30-min HD videos to YouTube, Google Drive, or GitHub Releases and paste the link above.`,
+        `Video file is ${fmtSize(vFile.size)}. Maximum gallery upload size is 100 MB.`,
         true
       );
       return;
@@ -385,10 +418,11 @@ export function AdminPanelModal({
     setIsBusy(true);
     try {
       if (!url && vFile) {
-        url = await readDataUrl(vFile);
+        setUploadProgress(0);
+        url = await uploadGalleryVideo(vFile, (pct) => setUploadProgress(pct));
       }
-      if (!url || url.length > 740000) {
-        notify('Video URL or clip exceeds cloud limit. Please use a YouTube or direct link.', true);
+      if (!url) {
+        notify('Could not upload selected video.', true);
         return;
       }
       await onCreateVideo({
@@ -405,10 +439,11 @@ export function AdminPanelModal({
       setVDesc('');
       setVFile(null);
       if (vFileRef.current) vFileRef.current.value = '';
-      notify('Video published live!');
+      notify('Video published live with 1k likes!');
     } catch (err) {
       notify(formatActionError(err), true);
     } finally {
+      setUploadProgress(null);
       setIsBusy(false);
     }
   };
@@ -926,10 +961,51 @@ export function AdminPanelModal({
                   placeholder="HD Video URL (500 MB / 30m+) — YouTube, Google Drive, GitHub Release .mp4, Dropbox"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
-                <div className="p-2.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1.5">
-                  <p className="text-[11px] text-[#0F2937] leading-relaxed">
-                    <strong>500 MB / 30+ min HD Video:</strong> Direct browser file upload is capped at 500 KB by Firebase Firestore. Upload your full HD video using any free host below and paste the link above:
-                  </p>
+                <div className="p-2.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] text-[#0F2937] leading-relaxed">
+                      <strong>Gallery Video (up to 100 MB) or HD Link:</strong> Choose up to a 100 MB video directly from your gallery, or paste a YouTube / Google Drive / GitHub Release link above.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowVideoCloudSetup((v) => !v)}
+                      className="text-[11px] font-bold text-[#0284C7] hover:underline cursor-pointer shrink-0"
+                    >
+                      {showVideoCloudSetup
+                        ? 'Hide Cloud Upload Setup'
+                        : cloudNameInput && uploadPresetInput
+                          ? '100 MB Cloud Upload: Ready ✓'
+                          : '100 MB Cloud Upload Setup'}
+                    </button>
+                  </div>
+                  {showVideoCloudSetup && (
+                    <div className="p-2.5 rounded-lg bg-white border border-[#BAE6FD] space-y-2">
+                      <p className="text-[11px] text-[#335160] leading-relaxed">
+                        For videos over 500 KB (up to 100 MB) from gallery, enter your free <strong>Cloudinary</strong> Cloud Name &amp; Unsigned Upload Preset once (or enable Firebase Storage):
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          value={cloudNameInput}
+                          onChange={(e) => setCloudNameInput(e.target.value)}
+                          placeholder="Cloudinary Cloud Name"
+                          className="px-2.5 py-1.5 rounded-lg border border-[#CBE5DC] text-xs"
+                        />
+                        <input
+                          value={uploadPresetInput}
+                          onChange={(e) => setUploadPresetInput(e.target.value)}
+                          placeholder="Unsigned Upload Preset"
+                          className="px-2.5 py-1.5 rounded-lg border border-[#CBE5DC] text-xs"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveVideoCloud}
+                        className="px-3 py-1.5 rounded-lg bg-[#059669] text-white text-[11px] font-semibold cursor-pointer"
+                      >
+                        Save 100 MB Upload Settings
+                      </button>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     <a
                       href="https://studio.youtube.com"
@@ -975,19 +1051,44 @@ export function AdminPanelModal({
                     <span>
                       {pVideoFile
                         ? `Video: ${pVideoFile.name}`
-                        : 'Small Video Clip (<500 KB)'}
+                        : 'Choose Video from Gallery (up to 100 MB)'}
                     </span>
                     <input
                       ref={pVideoRef}
                       type="file"
                       accept="video/*,.mp4,.mov,.webm,.3gp"
-                      onChange={(e) =>
-                        setPVideoFile(e.target.files?.[0] || null)
-                      }
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        if (f && f.size > MAX_GALLERY_VIDEO_BYTES) {
+                          notify(
+                            `Video is ${fmtSize(f.size)}. Maximum gallery upload size is 100 MB.`,
+                            true
+                          );
+                          e.target.value = '';
+                          setPVideoFile(null);
+                          return;
+                        }
+                        setPVideoFile(f);
+                      }}
                       className="sr-only"
                     />
                   </label>
                 </div>
+
+                {uploadProgress !== null && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-semibold text-[#0284C7]">
+                      <span>Uploading video from gallery...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-[#E0F2FE] overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#059669] to-[#0284C7] transition-all duration-150"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {(pImgPreview || pVideoFile) && (
                   <div className="flex flex-wrap items-center gap-3 p-2.5 rounded-xl bg-[#F4FBF8] border border-[#CDECE2]">
@@ -1035,7 +1136,11 @@ export function AdminPanelModal({
                   disabled={isBusy}
                   className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer disabled:opacity-60"
                 >
-                  {isBusy ? 'Publishing...' : 'Publish Post'}
+                  {isBusy
+                    ? uploadProgress !== null
+                      ? `Uploading (${uploadProgress}%)...`
+                      : 'Publishing...'
+                    : 'Publish Post'}
                 </button>
               </form>
 
@@ -1148,10 +1253,51 @@ export function AdminPanelModal({
                   placeholder="Paste 500 MB / 30+ min HD Video Link — YouTube, Google Drive, GitHub Release .mp4, Dropbox"
                   className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"
                 />
-                <div className="p-2.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1.5">
-                  <p className="text-[11px] text-[#0F2937] leading-relaxed">
-                    <strong>30-min / 500 MB+ HD Videos:</strong> Upload to YouTube (Public or Unlisted), Google Drive (&ldquo;Anyone with the link&rdquo;), or GitHub Releases (.mp4 up to 2 GB) and paste the link above for instant HD playback.
-                  </p>
+                <div className="p-2.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] text-[#0F2937] leading-relaxed">
+                      <strong>Gallery Video (up to 100 MB) or HD Link:</strong> Upload videos up to 100 MB directly from your device gallery, or paste a YouTube / Google Drive / GitHub Releases link above.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowVideoCloudSetup((v) => !v)}
+                      className="text-[11px] font-bold text-[#0284C7] hover:underline cursor-pointer shrink-0"
+                    >
+                      {showVideoCloudSetup
+                        ? 'Hide Cloud Upload Setup'
+                        : cloudNameInput && uploadPresetInput
+                          ? '100 MB Cloud Upload: Ready ✓'
+                          : '100 MB Cloud Upload Setup'}
+                    </button>
+                  </div>
+                  {showVideoCloudSetup && (
+                    <div className="p-2.5 rounded-lg bg-white border border-[#BAE6FD] space-y-2">
+                      <p className="text-[11px] text-[#335160] leading-relaxed">
+                        For videos over 500 KB (up to 100 MB) from gallery, enter your free <strong>Cloudinary</strong> Cloud Name &amp; Unsigned Upload Preset once (or enable Firebase Storage):
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          value={cloudNameInput}
+                          onChange={(e) => setCloudNameInput(e.target.value)}
+                          placeholder="Cloudinary Cloud Name"
+                          className="px-2.5 py-1.5 rounded-lg border border-[#CBE5DC] text-xs"
+                        />
+                        <input
+                          value={uploadPresetInput}
+                          onChange={(e) => setUploadPresetInput(e.target.value)}
+                          placeholder="Unsigned Upload Preset"
+                          className="px-2.5 py-1.5 rounded-lg border border-[#CBE5DC] text-xs"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveVideoCloud}
+                        className="px-3 py-1.5 rounded-lg bg-[#059669] text-white text-[11px] font-semibold cursor-pointer"
+                      >
+                        Save 100 MB Upload Settings
+                      </button>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     <a
                       href="https://studio.youtube.com"
@@ -1183,13 +1329,25 @@ export function AdminPanelModal({
                   <span>
                     {vFile
                       ? `Selected: ${vFile.name} (${fmtSize(vFile.size)})`
-                      : 'Or Choose Small Video Clip (<500 KB)'}
+                      : 'Choose Video from Gallery (up to 100 MB)'}
                   </span>
                   <input
                     ref={vFileRef}
                     type="file"
                     accept="video/*,.mp4,.mov,.webm,.3gp"
-                    onChange={(e) => setVFile(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      if (f && f.size > MAX_GALLERY_VIDEO_BYTES) {
+                        notify(
+                          `Video is ${fmtSize(f.size)}. Maximum gallery upload size is 100 MB.`,
+                          true
+                        );
+                        e.target.value = '';
+                        setVFile(null);
+                        return;
+                      }
+                      setVFile(f);
+                    }}
                     className="sr-only"
                   />
                 </label>
@@ -1205,6 +1363,20 @@ export function AdminPanelModal({
                     Remove selected video
                   </button>
                 )}
+                {uploadProgress !== null && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-semibold text-[#0284C7]">
+                      <span>Uploading video from gallery...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-[#E0F2FE] overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#059669] to-[#0284C7] transition-all duration-150"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
                 <textarea
                   value={vDesc}
                   onChange={(e) => setVDesc(e.target.value)}
@@ -1217,7 +1389,11 @@ export function AdminPanelModal({
                   disabled={isBusy}
                   className="px-4 py-2.5 rounded-xl bg-[#0284C7] text-white text-xs font-semibold cursor-pointer disabled:opacity-60"
                 >
-                  {isBusy ? 'Saving Video...' : 'Add Video'}
+                  {isBusy
+                    ? uploadProgress !== null
+                      ? `Uploading (${uploadProgress}%)...`
+                      : 'Saving Video...'
+                    : 'Add Video'}
                 </button>
               </form>
 

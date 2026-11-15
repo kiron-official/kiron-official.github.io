@@ -13,6 +13,12 @@ import {
   Unsubscribe,
   updateDoc,
 } from 'firebase/firestore';
+import {
+  getDownloadURL,
+  getStorage,
+  ref as storageRef,
+  uploadBytesResumable,
+} from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
 import {
   ADMIN_PASS_HASH,
@@ -28,7 +34,7 @@ import {
   SocialLinks,
   VideoItem,
 } from './types';
-import { formatEnglishPostDate } from './utils';
+import { formatEnglishPostDate, readDataUrl } from './utils';
 
 function resolveEnglishDate(raw: unknown, serverTs: unknown): string {
   const str = typeof raw === 'string' ? raw.trim() : '';
@@ -52,11 +58,165 @@ function resolveEnglishDate(raw: unknown, serverTs: unknown): string {
 
 export const MAX_FIRESTORE_MEDIA_CHARS = 430000;
 export const MAX_FIRESTORE_BINARY_BYTES = 500 * 1024;
+export const MAX_GALLERY_VIDEO_BYTES = 100 * 1024 * 1024;
 const SESSION_PASS_KEY = 'kiron_admin_session_pass';
+const VIDEO_CLOUD_CFG_KEY = 'kiron_cloudinary_cfg_v1';
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
+const storage = getStorage(app);
+
+export interface VideoCloudConfig {
+  cloudName: string;
+  uploadPreset: string;
+}
+
+export function getVideoCloudConfig(): VideoCloudConfig {
+  try {
+    const raw = JSON.parse(localStorage.getItem(VIDEO_CLOUD_CFG_KEY) || 'null');
+    if (raw && typeof raw === 'object') {
+      return {
+        cloudName: typeof raw.cloudName === 'string' ? raw.cloudName.trim() : '',
+        uploadPreset:
+          typeof raw.uploadPreset === 'string' ? raw.uploadPreset.trim() : '',
+      };
+    }
+  } catch {
+    // Ignore storage restriction
+  }
+  return { cloudName: '', uploadPreset: '' };
+}
+
+export function saveVideoCloudConfig(cfg: VideoCloudConfig): void {
+  try {
+    const clean: VideoCloudConfig = {
+      cloudName: cfg.cloudName.trim(),
+      uploadPreset: cfg.uploadPreset.trim(),
+    };
+    if (!clean.cloudName && !clean.uploadPreset) {
+      localStorage.removeItem(VIDEO_CLOUD_CFG_KEY);
+    } else {
+      localStorage.setItem(VIDEO_CLOUD_CFG_KEY, JSON.stringify(clean));
+    }
+  } catch {
+    // Ignore storage restriction
+  }
+}
+
+function uploadToCloudinary(
+  file: File,
+  cfg: VideoCloudConfig,
+  onProgress?: (pct: number) => void
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cfg.cloudName)}/video/upload`;
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', cfg.uploadPreset);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint);
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable && ev.total > 0 && onProgress) {
+        onProgress(Math.min(99, Math.round((ev.loaded / ev.total) * 100)));
+      }
+    };
+    xhr.onload = () => {
+      try {
+        const res = JSON.parse(xhr.responseText || '{}') as {
+          secure_url?: string;
+          error?: { message?: string };
+        };
+        if (xhr.status >= 200 && xhr.status < 300 && res.secure_url) {
+          onProgress?.(100);
+          resolve(res.secure_url);
+        } else {
+          reject(
+            new Error(
+              `UPLOAD_ERROR:${res.error?.message || `Video upload failed (HTTP ${xhr.status}). Check Cloud Name and Unsigned Preset.`}`
+            )
+          );
+        }
+      } catch {
+        reject(
+          new Error(
+            `UPLOAD_ERROR:Video upload failed (HTTP ${xhr.status}). Check Cloud Name and Unsigned Preset.`
+          )
+        );
+      }
+    };
+    xhr.onerror = () => {
+      reject(
+        new Error(
+          'UPLOAD_ERROR:Network error while uploading video. Check internet connection and try again.'
+        )
+      );
+    };
+    xhr.send(form);
+  });
+}
+
+function uploadToFirebaseStorage(
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-80) || 'video.mp4';
+    const fileRef = storageRef(storage, `videos/${Date.now()}-${safeName}`);
+    const task = uploadBytesResumable(fileRef, file, {
+      contentType: file.type || 'video/mp4',
+    });
+    task.on(
+      'state_changed',
+      (snap) => {
+        if (snap.totalBytes > 0 && onProgress) {
+          onProgress(
+            Math.min(99, Math.round((snap.bytesTransferred / snap.totalBytes) * 100))
+          );
+        }
+      },
+      () => {
+        reject(new Error('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP'));
+      },
+      async () => {
+        try {
+          const url = await getDownloadURL(task.snapshot.ref);
+          onProgress?.(100);
+          resolve(url);
+        } catch {
+          reject(new Error('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP'));
+        }
+      }
+    );
+  });
+}
+
+export async function uploadGalleryVideo(
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<string> {
+  if (file.size > MAX_GALLERY_VIDEO_BYTES) {
+    throw new Error(
+      `UPLOAD_ERROR:Video is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Maximum gallery video upload size is 100 MB.`
+    );
+  }
+
+  if (file.size <= MAX_FIRESTORE_BINARY_BYTES) {
+    const dataUrl = await readDataUrl(file);
+    if (dataUrl && dataUrl.length <= 740000) {
+      onProgress?.(100);
+      return dataUrl;
+    }
+  }
+
+  const cfg = getVideoCloudConfig();
+  if (cfg.cloudName && cfg.uploadPreset) {
+    return uploadToCloudinary(file, cfg, onProgress);
+  }
+
+  return uploadToFirebaseStorage(file, onProgress);
+}
 
 export enum OperationType {
   CREATE = 'create',

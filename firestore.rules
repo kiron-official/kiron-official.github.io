@@ -62,7 +62,7 @@ service cloud.firestore {
 
     function isValidPost(data, postId) {
       return data.keys().hasAll(['id', 'title', 'cat', 'body', 'img', 'videoUrl', 'createdAt', 'deleted', 'authProof', 'createdServerAt', 'updatedAt'])
-        && data.keys().hasOnly(['id', 'title', 'cat', 'body', 'img', 'videoUrl', 'createdAt', 'deleted', 'authProof', 'createdServerAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'title', 'cat', 'body', 'img', 'videoUrl', 'createdAt', 'baseLikes', 'deleted', 'authProof', 'createdServerAt', 'updatedAt'])
         && data.id == postId
         && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
         && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
@@ -71,6 +71,7 @@ service cloud.firestore {
         && data.img is string && data.img.size() <= 450000
         && data.videoUrl is string && data.videoUrl.size() <= 750000
         && data.createdAt is string && data.createdAt.size() <= 40
+        && (!('baseLikes' in data) || (data.baseLikes is int && data.baseLikes >= 0 && data.baseLikes <= 1000000))
         && data.deleted is bool
         && data.authProof is string && data.authProof.size() == 64
         && data.createdServerAt is timestamp
@@ -91,12 +92,13 @@ service cloud.firestore {
 
     function isValidPhoto(data, photoId) {
       return data.keys().hasAll(['id', 'img', 'cap', 'deleted', 'authProof', 'createdServerAt'])
-        && data.keys().hasOnly(['id', 'title', 'img', 'cap', 'deleted', 'authProof', 'createdServerAt'])
+        && data.keys().hasOnly(['id', 'title', 'img', 'cap', 'baseLikes', 'deleted', 'authProof', 'createdServerAt'])
         && data.id == photoId
         && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
         && (!('title' in data) || (data.title is string && data.title.size() <= 200))
         && data.img is string && data.img.size() >= 1 && data.img.size() <= 450000
         && data.cap is string && data.cap.size() <= 300
+        && (!('baseLikes' in data) || (data.baseLikes is int && data.baseLikes >= 0 && data.baseLikes <= 1000000))
         && data.deleted is bool
         && data.authProof is string && data.authProof.size() == 64
         && data.createdServerAt is timestamp;
@@ -114,13 +116,14 @@ service cloud.firestore {
 
     function isValidVideo(data, videoId) {
       return data.keys().hasAll(['id', 'title', 'url', 'description', 'createdAt', 'deleted', 'authProof', 'createdServerAt'])
-        && data.keys().hasOnly(['id', 'title', 'url', 'description', 'createdAt', 'deleted', 'authProof', 'createdServerAt'])
+        && data.keys().hasOnly(['id', 'title', 'url', 'description', 'createdAt', 'baseLikes', 'deleted', 'authProof', 'createdServerAt'])
         && data.id == videoId
         && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
         && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
         && data.url is string && data.url.size() >= 1 && data.url.size() <= 750000
         && data.description is string && data.description.size() <= 2000
         && data.createdAt is string && data.createdAt.size() <= 40
+        && (!('baseLikes' in data) || (data.baseLikes is int && data.baseLikes >= 0 && data.baseLikes <= 1000000))
         && data.deleted is bool
         && data.authProof is string && data.authProof.size() == 64
         && data.createdServerAt is timestamp;
@@ -179,6 +182,7 @@ service cloud.firestore {
       allow update: if isValidId(postId)
         && isValidPost(incoming(), postId)
         && incoming().id == existing().id
+        && (!('baseLikes' in existing()) || incoming().baseLikes == existing().baseLikes)
         && incoming().createdServerAt == existing().createdServerAt
         && incoming().updatedAt == request.time
         && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof', 'updatedAt'])
@@ -243,6 +247,7 @@ service cloud.firestore {
         && isValidPhoto(incoming(), photoId)
         && incoming().id == existing().id
         && (!('title' in existing()) || incoming().title == existing().title)
+        && (!('baseLikes' in existing()) || incoming().baseLikes == existing().baseLikes)
         && incoming().img == existing().img
         && incoming().cap == existing().cap
         && incoming().createdServerAt == existing().createdServerAt
@@ -288,6 +293,7 @@ service cloud.firestore {
         && incoming().url == existing().url
         && incoming().description == existing().description
         && incoming().createdAt == existing().createdAt
+        && (!('baseLikes' in existing()) || incoming().baseLikes == existing().baseLikes)
         && incoming().createdServerAt == existing().createdServerAt
         && incoming().deleted == true
         && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'authProof'])

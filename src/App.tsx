@@ -31,6 +31,7 @@ import {
 import {
   AdminTabId,
   CommentItem,
+  DEFAULT_BASE_LIKES,
   LightboxSlide,
   LikeCollectionName,
   LikeInfo,
@@ -40,6 +41,7 @@ import {
   SERIAL_TABS,
 } from './types';
 import {
+  formatLikeCount,
   formatTikTok,
   formatWa,
   getDefaultState,
@@ -173,13 +175,15 @@ function ExpandableBody({
 
 function LikeButton({
   info,
+  baseLikes = DEFAULT_BASE_LIKES,
   onToggle,
 }: {
   info?: LikeInfo;
+  baseLikes?: number;
   onToggle: () => void;
 }) {
   const liked = !!info?.liked;
-  const count = info?.count ?? 0;
+  const count = Math.max(0, baseLikes) + (info?.count ?? 0);
   return (
     <button
       type="button"
@@ -203,7 +207,7 @@ function LikeButton({
       >
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
       </svg>
-      <span>{count > 0 ? `Like (${count})` : 'Like'}</span>
+      <span>{count > 0 ? `Like (${formatLikeCount(count)})` : 'Like'}</span>
     </button>
   );
 }
@@ -782,6 +786,7 @@ export default function App() {
                             <div className="mt-auto pt-2.5 border-t border-[#E4F3EE] flex flex-wrap items-center gap-2">
                               <LikeButton
                                 info={likesByKey[`posts:${p.id}`]}
+                                baseLikes={p.baseLikes}
                                 onToggle={() => void handleToggleLike('posts', p.id)}
                               />
                               <button
@@ -915,6 +920,7 @@ export default function App() {
                           <div className="mt-auto pt-2.5 border-t border-[#E4F3EE] flex items-center justify-between gap-2">
                             <LikeButton
                               info={likesByKey[`photos:${g.id}`]}
+                              baseLikes={g.baseLikes}
                               onToggle={() =>
                                 void handleToggleLike('photos', g.id)
                               }
@@ -982,6 +988,7 @@ export default function App() {
                           <div className="mt-auto pt-2.5 border-t border-[#E4F3EE]">
                             <LikeButton
                               info={likesByKey[`videos:${v.id}`]}
+                              baseLikes={v.baseLikes}
                               onToggle={() =>
                                 void handleToggleLike('videos', v.id)
                               }
@@ -1107,6 +1114,7 @@ export default function App() {
                           <div className="mt-auto pt-2.5 border-t border-[#E4F3EE]">
                             <LikeButton
                               info={likesByKey[`posts:${item.id}`]}
+                              baseLikes={item.baseLikes}
                               onToggle={() =>
                                 void handleToggleLike('posts', item.id)
                               }

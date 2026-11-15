@@ -114,6 +114,10 @@
           "maxLength": 40,
           "description": "Human-readable month and year"
         },
+        "baseLikes": {
+          "type": "integer",
+          "description": "Automatic baseline likes count (1000)"
+        },
         "deleted": {
           "type": "boolean",
           "description": "Soft-delete flag managed by admin"
@@ -216,6 +220,10 @@
           "maxLength": 300,
           "description": "Optional photo caption"
         },
+        "baseLikes": {
+          "type": "integer",
+          "description": "Automatic baseline likes count (1000)"
+        },
         "deleted": {
           "type": "boolean",
           "description": "Soft-delete flag managed by admin"
@@ -294,6 +302,10 @@
           "type": "string",
           "maxLength": 40,
           "description": "Human-readable month and year"
+        },
+        "baseLikes": {
+          "type": "integer",
+          "description": "Automatic baseline likes count (1000)"
         },
         "deleted": {
           "type": "boolean",

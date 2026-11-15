@@ -25,6 +25,7 @@ export interface PostItem {
   img?: string;
   videoUrl?: string;
   createdAt?: string;
+  baseLikes?: number;
   comments: CommentItem[];
 }
 
@@ -33,7 +34,10 @@ export interface PhotoItem {
   title?: string;
   img: string;
   cap?: string;
+  baseLikes?: number;
 }
+
+export const DEFAULT_BASE_LIKES = 1000;
 
 export type LikeCollectionName = 'posts' | 'photos' | 'videos';
 
@@ -49,6 +53,7 @@ export interface VideoItem {
   url: string;
   description?: string;
   createdAt?: string;
+  baseLikes?: number;
 }
 
 export interface ApkItem {

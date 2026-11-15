@@ -18,6 +18,7 @@ import {
   ADMIN_PASS_HASH,
   ApkItem,
   CommentItem,
+  DEFAULT_BASE_LIKES,
   DEFAULT_SOCIALS,
   LikeCollectionName,
   LikeInfo,
@@ -292,6 +293,10 @@ export function subscribePosts(
                 ? d.videoUrl
                 : undefined,
             createdAt: resolveEnglishDate(d.createdAt, d.createdServerAt),
+            baseLikes:
+              typeof d.baseLikes === 'number' && Number.isFinite(d.baseLikes)
+                ? d.baseLikes
+                : DEFAULT_BASE_LIKES,
           };
         });
       onData(list);
@@ -314,6 +319,7 @@ export async function createCloudPost(post: {
   img?: string;
   videoUrl?: string;
   createdAt?: string;
+  baseLikes?: number;
 }): Promise<void> {
   const path = `posts/${post.id}`;
   try {
@@ -326,6 +332,10 @@ export async function createCloudPost(post: {
       img: (post.img || '').slice(0, 450000),
       videoUrl: (post.videoUrl || '').slice(0, 750000),
       createdAt: (post.createdAt || '').slice(0, 40),
+      baseLikes:
+        typeof post.baseLikes === 'number' && Number.isFinite(post.baseLikes)
+          ? Math.min(1000000, Math.max(0, Math.floor(post.baseLikes)))
+          : DEFAULT_BASE_LIKES,
       deleted: false,
       authProof,
       createdServerAt: serverTimestamp(),
@@ -433,6 +443,10 @@ export function subscribePhotos(
             title: typeof d.title === 'string' ? d.title : '',
             img: typeof d.img === 'string' ? d.img : '',
             cap: typeof d.cap === 'string' ? d.cap : '',
+            baseLikes:
+              typeof d.baseLikes === 'number' && Number.isFinite(d.baseLikes)
+                ? d.baseLikes
+                : DEFAULT_BASE_LIKES,
           };
         });
       onData(list);
@@ -456,6 +470,10 @@ export async function createCloudPhoto(photo: PhotoItem): Promise<void> {
       title: (photo.title || '').slice(0, 200),
       img: (photo.img || '').slice(0, 450000),
       cap: (photo.cap || '').slice(0, 300),
+      baseLikes:
+        typeof photo.baseLikes === 'number' && Number.isFinite(photo.baseLikes)
+          ? Math.min(1000000, Math.max(0, Math.floor(photo.baseLikes)))
+          : DEFAULT_BASE_LIKES,
       deleted: false,
       authProof,
       createdServerAt: serverTimestamp(),
@@ -557,6 +575,10 @@ export function subscribeVideos(
             description:
               typeof d.description === 'string' ? d.description : '',
             createdAt: resolveEnglishDate(d.createdAt, d.createdServerAt),
+            baseLikes:
+              typeof d.baseLikes === 'number' && Number.isFinite(d.baseLikes)
+                ? d.baseLikes
+                : DEFAULT_BASE_LIKES,
           };
         });
       onData(list);
@@ -581,6 +603,10 @@ export async function createCloudVideo(video: VideoItem): Promise<void> {
       url: (video.url || '').slice(0, 750000),
       description: (video.description || '').slice(0, 2000),
       createdAt: (video.createdAt || '').slice(0, 40),
+      baseLikes:
+        typeof video.baseLikes === 'number' && Number.isFinite(video.baseLikes)
+          ? Math.min(1000000, Math.max(0, Math.floor(video.baseLikes)))
+          : DEFAULT_BASE_LIKES,
       deleted: false,
       authProof,
       createdServerAt: serverTimestamp(),

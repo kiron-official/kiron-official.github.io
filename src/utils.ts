@@ -287,6 +287,7 @@ export function generateStandaloneHtml(state: PortalState): string {
           <img id="heroAvatar" src="profile.jpg" alt="MD KIRON MONDAL" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg shrink-0" />
           <div>
             <h1 class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight">MD KIRON MONDAL</h1>
+            <p class="text-xs sm:text-sm font-semibold text-[#047857] mt-0.5">বাবুনির বাবু &middot; Official Website</p>
             <p id="heroBio" class="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line hidden"></p>
           </div>
         </div>
@@ -489,7 +490,7 @@ export function generateStandaloneHtml(state: PortalState): string {
       document.getElementById('kironBtn').textContent = isAuthenticated ? 'KIRON Panel' : 'KIRON';
       document.getElementById('topNavLinks').innerHTML = SERIAL_TABS.map((t) => '<button type="button" onclick="setMainTab(\\'' + t.id + '\\', true)" class="transition-colors whitespace-nowrap shrink-0 cursor-pointer underline-offset-4 ' + (activeTab === t.id ? 'text-[#059669] underline' : 'hover:text-[#0284C7] hover:underline') + '">' + t.nav + '</button>').join('');
       document.getElementById('serialTabs').innerHTML = SERIAL_TABS.map((t) => '<button type="button" onclick="setMainTab(\\'' + t.id + '\\', false)" class="px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-colors whitespace-nowrap shrink-0 cursor-pointer ' + (activeTab === t.id ? 'bg-gradient-to-r from-[#059669] to-[#0284C7] text-white' : 'text-[#17465A] hover:bg-[#EAF6F4]') + '">' + t.label + '</button>').join('');
-      document.getElementById('footerYear').innerHTML = '&copy; ' + new Date().getFullYear() + ' MD KIRON MONDAL';
+      document.getElementById('footerYear').innerHTML = '&copy; ' + new Date().getFullYear() + ' MD KIRON MONDAL &middot; বাবুনির বাবু';
       document.getElementById('footerTabs').innerHTML = SERIAL_TABS.map((t) => '<button type="button" onclick="setMainTab(\\'' + t.id + '\\', false); window.scrollTo({top:0,behavior:\\'smooth\\'})" class="hover:text-[#059669] transition-colors cursor-pointer">' + t.label + '</button>').join('');
       renderSocialBar();
       const body = document.getElementById('tabContent');

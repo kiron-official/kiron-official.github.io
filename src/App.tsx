@@ -624,6 +624,9 @@ export default function App() {
                 <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight text-balance">
                   MD KIRON MONDAL
                 </h1>
+                <p className="text-xs sm:text-sm font-semibold text-[#047857] mt-0.5">
+                  বাবুনির বাবু &middot; Official Website
+                </p>
                 {state.bio && state.bio.trim() && (
                   <p className="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line">
                     {state.bio}
@@ -1135,7 +1138,9 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-[#9ED6C8] bg-gradient-to-r from-[#E3F6EE] to-[#E1F1FE] py-5">
         <div className="max-w-6xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-[#17465A]">
-          <span>&copy; {new Date().getFullYear()} MD KIRON MONDAL</span>
+          <span>
+            &copy; {new Date().getFullYear()} MD KIRON MONDAL &middot; বাবুনির বাবু
+          </span>
           <div className="flex flex-wrap items-center gap-5">
             {SERIAL_TABS.map((t) => (
               <button

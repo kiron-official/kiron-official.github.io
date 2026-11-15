@@ -192,6 +192,189 @@ function uploadToFirebaseStorage(
   });
 }
 
+async function isFirebaseStorageReady(): Promise<boolean> {
+  if (!firebaseConfig.storageBucket) return false;
+  try {
+    const res = await fetch(
+      `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(firebaseConfig.storageBucket)}/o?maxResults=1`,
+      { method: 'GET' }
+    );
+    return res.status !== 404;
+  } catch {
+    return false;
+  }
+}
+
+async function compressShortVideoForFirestore(
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<string | null> {
+  if (
+    typeof document === 'undefined' ||
+    typeof MediaRecorder === 'undefined' ||
+    typeof URL.createObjectURL !== 'function'
+  ) {
+    return null;
+  }
+
+  const objUrl = URL.createObjectURL(file);
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.src = objUrl;
+
+  try {
+    const loaded = await new Promise<boolean>((resolve) => {
+      const t = setTimeout(() => resolve(false), 6000);
+      video.onloadedmetadata = () => {
+        clearTimeout(t);
+        resolve(true);
+      };
+      video.onerror = () => {
+        clearTimeout(t);
+        resolve(false);
+      };
+    });
+
+    if (
+      !loaded ||
+      !Number.isFinite(video.duration) ||
+      video.duration <= 0 ||
+      video.duration > 18
+    ) {
+      return null;
+    }
+
+    const maxW = 360;
+    const vw = video.videoWidth || 360;
+    const vh = video.videoHeight || 640;
+    const scale = Math.min(1, maxW / vw);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(160, Math.round(vw * scale));
+    canvas.height = Math.max(160, Math.round(vh * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx || typeof canvas.captureStream !== 'function') return null;
+
+    const canvasStream = canvas.captureStream(18);
+    const videoElAny = video as HTMLVideoElement & {
+      captureStream?: () => MediaStream;
+      mozCaptureStream?: () => MediaStream;
+    };
+    try {
+      const elStream =
+        typeof videoElAny.captureStream === 'function'
+          ? videoElAny.captureStream()
+          : typeof videoElAny.mozCaptureStream === 'function'
+            ? videoElAny.mozCaptureStream()
+            : null;
+      if (elStream) {
+        elStream.getAudioTracks().forEach((tr) => canvasStream.addTrack(tr));
+      }
+    } catch {
+      // Proceed with video track only if audio capture is restricted
+    }
+
+    const mimeCandidates = [
+      'video/mp4',
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp8',
+      'video/webm',
+    ];
+    const mimeType =
+      mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || '';
+    const targetBits = Math.min(
+      320000,
+      Math.max(85000, Math.floor((410 * 1024 * 8) / Math.max(2, video.duration)))
+    );
+
+    const recorder = new MediaRecorder(canvasStream, {
+      ...(mimeType ? { mimeType } : {}),
+      videoBitsPerSecond: targetBits,
+    });
+
+    const chunks: BlobPart[] = [];
+    recorder.ondataavailable = (ev) => {
+      if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+    };
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      let stopped = false;
+      let rafId = 0;
+      const finish = () => {
+        if (stopped) return;
+        stopped = true;
+        cancelAnimationFrame(rafId);
+        clearTimeout(hardTimeout);
+        try {
+          if (recorder.state !== 'inactive') recorder.stop();
+        } catch {
+          resolve(null);
+        }
+      };
+
+      const hardTimeout = setTimeout(
+        finish,
+        Math.ceil(video.duration * 1000) + 6000
+      );
+
+      recorder.onstop = () => {
+        clearTimeout(hardTimeout);
+        cancelAnimationFrame(rafId);
+        if (!chunks.length) {
+          resolve(null);
+          return;
+        }
+        resolve(
+          new Blob(chunks, {
+            type: mimeType || 'video/webm',
+          })
+        );
+      };
+
+      recorder.onerror = () => {
+        clearTimeout(hardTimeout);
+        cancelAnimationFrame(rafId);
+        resolve(null);
+      };
+
+      const drawFrame = () => {
+        if (stopped) return;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        if (video.duration > 0 && onProgress) {
+          onProgress(
+            Math.min(95, Math.round((video.currentTime / video.duration) * 95))
+          );
+        }
+        if (video.ended) {
+          finish();
+          return;
+        }
+        rafId = requestAnimationFrame(drawFrame);
+      };
+
+      video.onended = finish;
+      recorder.start(250);
+      video.play().then(drawFrame).catch(() => finish());
+    });
+
+    if (!blob || blob.size === 0 || blob.size > MAX_FIRESTORE_BINARY_BYTES) {
+      return null;
+    }
+
+    const dataUrl = await readDataUrl(
+      new File([blob], 'clip.mp4', { type: blob.type || 'video/webm' })
+    );
+    if (!dataUrl || dataUrl.length > 740000) return null;
+    onProgress?.(100);
+    return dataUrl;
+  } finally {
+    video.pause();
+    video.removeAttribute('src');
+    URL.revokeObjectURL(objUrl);
+  }
+}
+
 export async function uploadGalleryVideo(
   file: File,
   onProgress?: (pct: number) => void
@@ -215,7 +398,16 @@ export async function uploadGalleryVideo(
     return uploadToCloudinary(file, cfg, onProgress);
   }
 
-  return uploadToFirebaseStorage(file, onProgress);
+  if (await isFirebaseStorageReady()) {
+    return uploadToFirebaseStorage(file, onProgress);
+  }
+
+  const compressed = await compressShortVideoForFirestore(file, onProgress);
+  if (compressed) {
+    return compressed;
+  }
+
+  throw new Error('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP');
 }
 
 export enum OperationType {

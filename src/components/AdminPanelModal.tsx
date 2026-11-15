@@ -183,7 +183,7 @@ export function AdminPanelModal({
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.startsWith('UPLOAD_ERROR:NEEDS_VIDEO_CLOUD_SETUP')) {
       setShowVideoCloudSetup(true);
-      return 'Videos over 500 KB need Cloud Video Setup below (enter free Cloudinary Cloud Name + Unsigned Preset once, or enable Firebase Storage).';
+      return 'For videos longer than 18s (up to 100 MB), open "100 MB Cloud Upload Setup" below and save your free Cloudinary Cloud Name + Preset once (or paste a YouTube/Drive link).';
     }
     if (msg.startsWith('UPLOAD_ERROR:')) {
       return msg.slice('UPLOAD_ERROR:'.length).trim();
@@ -980,8 +980,21 @@ export function AdminPanelModal({
                   </div>
                   {showVideoCloudSetup && (
                     <div className="p-2.5 rounded-lg bg-white border border-[#BAE6FD] space-y-2">
-                      <p className="text-[11px] text-[#335160] leading-relaxed">
-                        For videos over 500 KB (up to 100 MB) from gallery, enter your free <strong>Cloudinary</strong> Cloud Name &amp; Unsigned Upload Preset once (or enable Firebase Storage):
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[11px] text-[#335160] leading-relaxed">
+                          Short clips (&le;18s) upload automatically. For <strong>any gallery video up to 100 MB</strong>, connect free <strong>Cloudinary</strong> (25 GB free) once:
+                        </p>
+                        <a
+                          href="https://cloudinary.com/users/register_free"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-0.5 rounded bg-[#EFF6FF] border border-[#93C5FD] text-[#0369A1] text-[10px] font-bold hover:bg-[#DBEAFE] shrink-0"
+                        >
+                          Free Cloudinary Sign Up
+                        </a>
+                      </div>
+                      <p className="text-[10px] text-[#4A6B7A]">
+                        1. Copy <strong>Cloud Name</strong> from Dashboard &rarr; 2. Settings &rarr; Upload &rarr; Add Upload Preset (Signing Mode: <strong>Unsigned</strong>) &rarr; 3. Paste &amp; Save:
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <input
@@ -1272,8 +1285,21 @@ export function AdminPanelModal({
                   </div>
                   {showVideoCloudSetup && (
                     <div className="p-2.5 rounded-lg bg-white border border-[#BAE6FD] space-y-2">
-                      <p className="text-[11px] text-[#335160] leading-relaxed">
-                        For videos over 500 KB (up to 100 MB) from gallery, enter your free <strong>Cloudinary</strong> Cloud Name &amp; Unsigned Upload Preset once (or enable Firebase Storage):
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[11px] text-[#335160] leading-relaxed">
+                          Short clips (&le;18s) upload automatically. For <strong>any gallery video up to 100 MB</strong>, connect free <strong>Cloudinary</strong> (25 GB free) once:
+                        </p>
+                        <a
+                          href="https://cloudinary.com/users/register_free"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-0.5 rounded bg-[#EFF6FF] border border-[#93C5FD] text-[#0369A1] text-[10px] font-bold hover:bg-[#DBEAFE] shrink-0"
+                        >
+                          Free Cloudinary Sign Up
+                        </a>
+                      </div>
+                      <p className="text-[10px] text-[#4A6B7A]">
+                        1. Copy <strong>Cloud Name</strong> from Dashboard &rarr; 2. Settings &rarr; Upload &rarr; Add Upload Preset (Signing Mode: <strong>Unsigned</strong>) &rarr; 3. Paste &amp; Save:
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <input

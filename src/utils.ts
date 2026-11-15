@@ -1,5 +1,6 @@
 import {
   ADMIN_PASS_HASH,
+  DEFAULT_DISPLAY_NAME,
   DEFAULT_SOCIALS,
   PortalState,
   STORAGE_KEY,
@@ -178,6 +179,7 @@ export function fmtSize(bytes: number): string {
 
 export function getDefaultState(): PortalState {
   return {
+    name: DEFAULT_DISPLAY_NAME,
     avatar: 'profile.jpg',
     bio: '',
     socials: { ...DEFAULT_SOCIALS },
@@ -193,6 +195,10 @@ export function loadState(): PortalState {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return getDefaultState();
     return {
+      name:
+        typeof raw.name === 'string' && raw.name.trim()
+          ? raw.name.trim()
+          : DEFAULT_DISPLAY_NAME,
       avatar: typeof raw.avatar === 'string' ? raw.avatar : 'profile.jpg',
       bio: typeof raw.bio === 'string' ? raw.bio : '',
       socials: {
@@ -281,7 +287,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-8">
       <a href="#top" class="inline-flex items-center gap-3 text-[#0F2937] font-bold text-base sm:text-lg tracking-tight whitespace-nowrap shrink-0">
         <span id="navAvatar" class="w-9 h-9 rounded-full border-2 border-[#059669] bg-white flex items-center justify-center font-bold text-sm text-[#059669] overflow-hidden shrink-0">K</span>
-        <span>MD KIRON MONDAL</span>
+        <span id="navName">MD KIRON MONDAL</span>
       </a>
       <nav aria-label="Primary Navigation" class="hidden md:flex items-center gap-6 text-sm font-semibold text-[#114B5F]" id="topNavLinks"></nav>
       <div class="flex items-center gap-3 shrink-0">
@@ -298,7 +304,7 @@ export function generateStandaloneHtml(state: PortalState): string {
         <div class="flex items-center gap-4 max-w-xl">
           <img id="heroAvatar" src="profile.jpg" alt="MD KIRON MONDAL" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg shrink-0" />
           <div>
-            <h1 class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight">MD KIRON MONDAL</h1>
+            <h1 id="heroName" class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight">MD KIRON MONDAL</h1>
             <p id="heroBio" class="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line hidden"></p>
           </div>
         </div>
@@ -402,6 +408,7 @@ export function generateStandaloneHtml(state: PortalState): string {
         const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
         if (!raw || typeof raw !== 'object') return JSON.parse(JSON.stringify(BAKED_INITIAL_STATE));
         return {
+          name: (typeof raw.name === 'string' && raw.name.trim()) ? raw.name.trim() : (BAKED_INITIAL_STATE.name || 'MD KIRON MONDAL'),
           avatar: (typeof raw.avatar === 'string' && raw.avatar) ? raw.avatar : BAKED_INITIAL_STATE.avatar,
           bio: typeof raw.bio === 'string' ? raw.bio : BAKED_INITIAL_STATE.bio,
           socials: {
@@ -495,16 +502,19 @@ export function generateStandaloneHtml(state: PortalState): string {
       return '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">' + list.map((item) => '<article class="bg-white border border-[#9FD0EC] rounded-xl p-3.5 flex flex-col"><div class="text-xs font-semibold text-[#0284C7] mb-1.5">Announcement' + (item.createdAt ? ' &middot; ' + esc(item.createdAt) : '') + '</div><h3 class="text-[15.5px] font-bold text-[#0F2937] mb-1.5">' + esc(item.title) + '</h3><p class="text-[13.5px] text-[#335160] leading-relaxed whitespace-pre-line mb-2.5">' + esc(item.body) + '</p><div class="mt-auto pt-2.5 border-t border-[#E4F3EE]">' + likeBadge(item.baseLikes) + '</div></article>').join('') + '</div>';
     }
     function render() {
+      const displayName = (state.name || '').trim() || 'MD KIRON MONDAL';
       const av = document.getElementById('navAvatar');
-      av.innerHTML = state.avatar ? '<img src="' + state.avatar + '" alt="MD KIRON MONDAL" class="w-full h-full object-cover" />' : 'K';
+      av.innerHTML = state.avatar ? '<img src="' + state.avatar + '" alt="' + esc(displayName) + '" class="w-full h-full object-cover" />' : esc(displayName.charAt(0).toUpperCase() || 'K');
+      document.getElementById('navName').textContent = displayName;
+      document.getElementById('heroName').textContent = displayName;
       const heroAvatar = document.getElementById('heroAvatar');
-      if (heroAvatar) { heroAvatar.src = state.avatar || 'profile.jpg'; heroAvatar.style.display = state.avatar ? 'block' : 'none'; }
+      if (heroAvatar) { heroAvatar.src = state.avatar || 'profile.jpg'; heroAvatar.alt = displayName; heroAvatar.style.display = state.avatar ? 'block' : 'none'; }
       const bioEl = document.getElementById('heroBio');
       if (state.bio && state.bio.trim()) { bioEl.textContent = state.bio; bioEl.classList.remove('hidden'); } else { bioEl.classList.add('hidden'); }
       document.getElementById('kironBtn').textContent = isAuthenticated ? 'KIRON Panel' : 'KIRON';
       document.getElementById('topNavLinks').innerHTML = SERIAL_TABS.map((t) => '<button type="button" onclick="setMainTab(\\'' + t.id + '\\', true)" class="transition-colors whitespace-nowrap shrink-0 cursor-pointer underline-offset-4 ' + (activeTab === t.id ? 'text-[#059669] underline' : 'hover:text-[#0284C7] hover:underline') + '">' + t.nav + '</button>').join('');
       document.getElementById('serialTabs').innerHTML = SERIAL_TABS.map((t) => '<button type="button" onclick="setMainTab(\\'' + t.id + '\\', false)" class="px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-colors whitespace-nowrap shrink-0 cursor-pointer ' + (activeTab === t.id ? 'bg-gradient-to-r from-[#059669] to-[#0284C7] text-white' : 'text-[#17465A] hover:bg-[#EAF6F4]') + '">' + t.label + '</button>').join('');
-      document.getElementById('footerYear').innerHTML = '&copy; ' + new Date().getFullYear() + ' MD KIRON MONDAL &middot; বাবুনির বাবু';
+      document.getElementById('footerYear').innerHTML = '&copy; ' + new Date().getFullYear() + ' ' + esc(displayName) + ' &middot; বাবুনির বাবু';
       document.getElementById('footerTabs').innerHTML = SERIAL_TABS.map((t) => '<button type="button" onclick="setMainTab(\\'' + t.id + '\\', false); window.scrollTo({top:0,behavior:\\'smooth\\'})" class="hover:text-[#059669] transition-colors cursor-pointer">' + t.label + '</button>').join('');
       renderSocialBar();
       const body = document.getElementById('tabContent');
@@ -533,7 +543,7 @@ export function generateStandaloneHtml(state: PortalState): string {
       document.getElementById('adminTabsBar').innerHTML = ADMIN_TABS.map((t) => '<button type="button" onclick="setAdminTab(\\'' + t.id + '\\')" class="px-3.5 py-2 text-xs font-semibold border-b-2 whitespace-nowrap shrink-0 cursor-pointer ' + (adminTab === t.id ? 'border-[#0284C7] text-[#0284C7]' : 'border-transparent text-[#4A6B7A]') + '">' + t.label + '</button>').join('');
       const body = document.getElementById('adminTabBody');
       if (adminTab === 'profile') {
-        body.innerHTML = '<div class="space-y-6"><div class="space-y-3"><h4 class="text-sm font-bold text-[#0284C7]">Profile Photo</h4><input type="file" accept="image/*" onchange="uploadAvatar(event)" class="block text-xs" />' + (state.avatar ? '<button type="button" onclick="deleteAvatar()" class="px-3 py-1.5 rounded-lg bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete Profile Photo</button>' : '') + '</div><form onsubmit="saveBio(event)" class="pt-4 border-t border-[#DCEFE9] space-y-3"><h4 class="text-sm font-bold text-[#059669]">Bio</h4><textarea id="adminBioInput" rows="3" placeholder="Write your bio here..." class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm">' + esc(state.bio) + '</textarea><div class="flex gap-2"><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Save Bio</button>' + (state.bio ? '<button type="button" onclick="clearBio()" class="px-3.5 py-2 rounded-lg bg-[#FEE2E2] text-[#B91C1C] text-xs font-semibold cursor-pointer">Clear Bio</button>' : '') + '</div></form></div>';
+        body.innerHTML = '<div class="space-y-6"><div class="space-y-3"><h4 class="text-sm font-bold text-[#0284C7]">Profile Photo</h4><input type="file" accept="image/*" onchange="uploadAvatar(event)" class="block text-xs" />' + (state.avatar ? '<button type="button" onclick="deleteAvatar()" class="px-3 py-1.5 rounded-lg bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete Profile Photo</button>' : '') + '</div><form onsubmit="saveBio(event)" class="pt-4 border-t border-[#DCEFE9] space-y-3"><h4 class="text-sm font-bold text-[#059669]">Name &amp; Bio</h4><input id="adminNameInput" value="' + esc(state.name || 'MD KIRON MONDAL') + '" placeholder="Display Name" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><textarea id="adminBioInput" rows="3" placeholder="Write your bio here..." class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm">' + esc(state.bio) + '</textarea><div class="flex gap-2"><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Save Name &amp; Bio</button>' + (state.bio ? '<button type="button" onclick="clearBio()" class="px-3.5 py-2 rounded-lg bg-[#FEE2E2] text-[#B91C1C] text-xs font-semibold cursor-pointer">Clear Bio</button>' : '') + '</div></form></div>';
       } else if (adminTab === 'posts') {
         body.innerHTML = '<form onsubmit="addPost(event)" class="space-y-3"><h4 class="text-sm font-bold text-[#059669]">Create Post or Announcement</h4><input id="pTitle" placeholder="Title" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm" /><select id="pCat" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm bg-white"><option value="Update">POSTS</option><option value="Photo">Photo</option><option value="Announcement">Announcement</option></select><textarea id="pBody" rows="3" placeholder="Description" class="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm"></textarea><input id="pFile" type="file" accept="image/*" class="block text-xs" /><button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer">Publish Post</button></form><div class="pt-4 border-t border-[#DCEFE9] space-y-2">' + state.posts.map((p) => '<div class="py-2 border-b border-[#E2F2EC]"><div class="flex items-center justify-between gap-2"><strong class="text-sm">' + esc(p.title) + ' (' + esc(p.cat === 'Update' ? 'POSTS' : p.cat) + ')</strong><button type="button" onclick="delPost(\\'' + esc(p.id) + '\\')" class="px-2.5 py-1 rounded bg-[#DC2626] text-white text-xs font-semibold cursor-pointer">Delete</button></div>' + (p.comments || []).map((c) => '<div class="pl-4 mt-1 flex items-center justify-between text-xs"><span>' + esc(c.author) + ': ' + esc(c.text) + '</span><button type="button" onclick="delCmt(\\'' + esc(p.id) + '\\',\\'' + esc(c.id) + '\\')" class="px-2 py-0.5 rounded bg-[#FEE2E2] text-[#B91C1C] cursor-pointer">Delete</button></div>').join('') + '</div>').join('') + '</div>';
       } else if (adminTab === 'videos') {
@@ -548,7 +558,7 @@ export function generateStandaloneHtml(state: PortalState): string {
     }
     async function uploadAvatar(e) { const f = e.target.files[0]; if (!f) return; state.avatar = await readDataUrl(f); save(); }
     function deleteAvatar() { state.avatar = ''; save(); }
-    function saveBio(e) { e.preventDefault(); state.bio = document.getElementById('adminBioInput').value.trim(); save(); }
+    function saveBio(e) { e.preventDefault(); state.name = document.getElementById('adminNameInput').value.trim() || 'MD KIRON MONDAL'; state.bio = document.getElementById('adminBioInput').value.trim(); save(); }
     function clearBio() { state.bio = ''; save(); }
     async function addPost(e) { e.preventDefault(); const title = document.getElementById('pTitle').value.trim(); const cat = document.getElementById('pCat').value; const body = document.getElementById('pBody').value.trim(); const file = document.getElementById('pFile').files[0]; if (!title && !body && !file) return; const img = await readDataUrl(file); state.posts.unshift({ id: makeId('post'), title: title || 'New Post', cat, body, img, createdAt: monthYear(), comments: [] }); save(); }
     function delPost(id) { state.posts = state.posts.filter((p) => p.id !== id); save(); }

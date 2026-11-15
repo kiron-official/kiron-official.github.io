@@ -32,6 +32,7 @@ import {
   AdminTabId,
   CommentItem,
   DEFAULT_BASE_LIKES,
+  DEFAULT_DISPLAY_NAME,
   LightboxSlide,
   LikeCollectionName,
   LikeInfo,
@@ -218,7 +219,12 @@ function LikeButton({
 export default function App() {
   const [profile, setProfile] = useState<PublicSiteProfile>(() => {
     const def = getDefaultState();
-    return { avatar: def.avatar, bio: def.bio, socials: def.socials };
+    return {
+      name: def.name,
+      avatar: def.avatar,
+      bio: def.bio,
+      socials: def.socials,
+    };
   });
   const [rawPosts, setRawPosts] = useState<Omit<PostItem, 'comments'>[]>([]);
   const [commentsByPost, setCommentsByPost] = useState<
@@ -341,7 +347,10 @@ export default function App() {
     comments: commentsByPost[p.id] || [],
   }));
 
+  const displayName = (profile.name || '').trim() || DEFAULT_DISPLAY_NAME;
+
   const state: PortalState = {
+    name: displayName,
     avatar: profile.avatar,
     bio: profile.bio,
     socials: profile.socials,
@@ -350,6 +359,10 @@ export default function App() {
     videos,
     apks,
   };
+
+  useEffect(() => {
+    document.title = `বাবুনির বাবু · ${displayName} — Official Website`;
+  }, [displayName]);
 
   useEffect(() => {
     setAvatarBroken(false);
@@ -561,16 +574,16 @@ export default function App() {
               {resolvedAvatar && !avatarBroken ? (
                 <img
                   src={resolvedAvatar}
-                  alt="MD KIRON MONDAL (বাবুনির বাবু)"
+                  alt={displayName}
                   referrerPolicy="no-referrer"
                   onError={() => setAvatarBroken(true)}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                'K'
+                displayName.charAt(0).toUpperCase() || 'K'
               )}
             </span>
-            <span>MD KIRON MONDAL</span>
+            <span>{displayName}</span>
           </a>
 
           <nav
@@ -616,7 +629,7 @@ export default function App() {
               {resolvedAvatar && !avatarBroken && (
                 <img
                   src={resolvedAvatar}
-                  alt="MD KIRON MONDAL (বাবুনির বাবু)"
+                  alt={displayName}
                   referrerPolicy="no-referrer"
                   onError={() => setAvatarBroken(true)}
                   className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg shrink-0"
@@ -624,12 +637,12 @@ export default function App() {
               )}
               {state.avatar && avatarBroken && (
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center font-display text-2xl font-bold text-[#059669] shrink-0">
-                  K
+                  {displayName.charAt(0).toUpperCase() || 'K'}
                 </div>
               )}
               <div>
                 <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#0F2937] leading-tight text-balance">
-                  MD KIRON MONDAL
+                  {displayName}
                 </h1>
                 {state.bio && state.bio.trim() && (
                   <p className="mt-2 text-sm sm:text-base text-[#17465A] leading-relaxed whitespace-pre-line">
@@ -1143,7 +1156,7 @@ export default function App() {
       <footer className="border-t border-[#9ED6C8] bg-gradient-to-r from-[#E3F6EE] to-[#E1F1FE] py-5">
         <div className="max-w-6xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-[#17465A]">
           <span>
-            &copy; {new Date().getFullYear()} MD KIRON MONDAL &middot; বাবুনির বাবু
+            &copy; {new Date().getFullYear()} {displayName} &middot; বাবুনির বাবু
           </span>
           <div className="flex flex-wrap items-center gap-5">
             {SERIAL_TABS.map((t) => (

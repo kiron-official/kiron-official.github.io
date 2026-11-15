@@ -48,6 +48,12 @@
       "description": "Public personal website profile, bio, avatar, and social links.",
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Public display name shown in header and hero"
+        },
         "avatar": {
           "type": "string",
           "maxLength": 450000,

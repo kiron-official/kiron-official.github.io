@@ -77,7 +77,10 @@ export interface SocialLinks {
   instagram: string;
 }
 
+export const DEFAULT_DISPLAY_NAME = 'MD KIRON MONDAL';
+
 export interface PortalState {
+  name: string;
   avatar: string;
   bio: string;
   socials: SocialLinks;

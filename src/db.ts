@@ -36,6 +36,7 @@ function normalizeState(raw: unknown): PortalState {
   if (!raw || typeof raw !== 'object') return def;
   const r = raw as Partial<PortalState>;
   return {
+    name: typeof r.name === 'string' && r.name.trim() ? r.name.trim() : def.name,
     avatar: typeof r.avatar === 'string' ? r.avatar : def.avatar,
     bio: typeof r.bio === 'string' ? r.bio : '',
     socials: {

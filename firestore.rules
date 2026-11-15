@@ -53,7 +53,8 @@ service cloud.firestore {
 
     function isValidSiteProfile(data) {
       return data.keys().hasAll(['avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
-        && data.keys().hasOnly(['avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
+        && (!('name' in data) || (data.name is string && data.name.size() <= 120))
         && data.avatar is string && data.avatar.size() <= 450000
         && data.bio is string && data.bio.size() <= 2000
         && isValidSocials(data.socials)
@@ -166,7 +167,7 @@ service cloud.firestore {
       allow update: if docId == 'public'
         && isValidSiteProfile(incoming())
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'bio', 'socials', 'authProof', 'updatedAt'])
         && (hasValidProof(incoming().authProof, 'public') || isAdminUser());
       allow delete: if false;
     }

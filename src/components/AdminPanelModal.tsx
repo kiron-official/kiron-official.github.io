@@ -13,6 +13,7 @@ import {
   ADMIN_TABS,
   AdminTabId,
   ApkItem,
+  DEFAULT_DISPLAY_NAME,
   PhotoItem,
   PortalState,
   PostCategory,
@@ -118,7 +119,8 @@ export function AdminPanelModal({
   // Avatar ref
   const avatarFileRef = useRef<HTMLInputElement>(null);
 
-  // Bio & Socials form
+  // Profile Name, Bio & Socials form
+  const [nameInput, setNameInput] = useState(state.name);
   const [bioInput, setBioInput] = useState(state.bio);
   const [socialsInput, setSocialsInput] = useState<SocialLinks>(state.socials);
 
@@ -165,11 +167,12 @@ export function AdminPanelModal({
       setAdminTab(initialTab);
     }
     if (isOpen) {
+      setNameInput(state.name);
       setBioInput(state.bio);
       setSocialsInput(state.socials);
       setConfirmClear(null);
     }
-  }, [isOpen, initialTab, state.bio, state.socials]);
+  }, [isOpen, initialTab, state.name, state.bio, state.socials]);
 
   if (!isOpen) return null;
 
@@ -234,6 +237,7 @@ export function AdminPanelModal({
         return;
       }
       await onSaveProfile({
+        name: state.name,
         avatar: url,
         bio: state.bio,
         socials: state.socials,
@@ -251,6 +255,7 @@ export function AdminPanelModal({
     setIsBusy(true);
     try {
       await onSaveProfile({
+        name: state.name,
         avatar: '',
         bio: state.bio,
         socials: state.socials,
@@ -268,12 +273,15 @@ export function AdminPanelModal({
     e.preventDefault();
     setIsBusy(true);
     try {
+      const nextName = nameInput.trim() || DEFAULT_DISPLAY_NAME;
+      setNameInput(nextName);
       await onSaveProfile({
+        name: nextName,
         avatar: state.avatar,
         bio: bioInput.trim(),
         socials: state.socials,
       });
-      notify('Bio saved & synced live.');
+      notify('Name & Bio saved & synced live.');
     } catch (err) {
       notify(formatActionError(err), true);
     } finally {
@@ -286,6 +294,7 @@ export function AdminPanelModal({
     try {
       setBioInput('');
       await onSaveProfile({
+        name: state.name,
         avatar: state.avatar,
         bio: '',
         socials: state.socials,
@@ -634,6 +643,7 @@ export function AdminPanelModal({
     setIsBusy(true);
     try {
       await onSaveProfile({
+        name: state.name,
         avatar: state.avatar,
         bio: state.bio,
         socials: {
@@ -693,6 +703,10 @@ export function AdminPanelModal({
         return;
       }
       await onSaveProfile({
+        name:
+          typeof parsed.name === 'string' && parsed.name.trim()
+            ? parsed.name.trim()
+            : state.name,
         avatar:
           typeof parsed.avatar === 'string' &&
           parsed.avatar.length <= MAX_FIRESTORE_MEDIA_CHARS
@@ -832,7 +846,10 @@ export function AdminPanelModal({
               onClick={() => {
                 setAdminTab(t.id);
                 setConfirmClear(null);
-                if (t.id === 'profile') setBioInput(state.bio);
+                if (t.id === 'profile') {
+                  setNameInput(state.name);
+                  setBioInput(state.bio);
+                }
                 if (t.id === 'socials') setSocialsInput(state.socials);
               }}
               className={`px-3.5 py-2 text-xs font-semibold border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${
@@ -895,21 +912,46 @@ export function AdminPanelModal({
                 onSubmit={handleSaveBio}
                 className="pt-4 border-t border-[#DCEFE9] space-y-3"
               >
-                <h4 className="text-sm font-bold text-[#059669]">Bio</h4>
-                <textarea
-                  value={bioInput}
-                  onChange={(e) => setBioInput(e.target.value)}
-                  rows={3}
-                  placeholder="Write your bio here..."
-                  className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm text-[#0F2937]"
-                />
+                <h4 className="text-sm font-bold text-[#059669]">Name &amp; Bio</h4>
+                <div>
+                  <label
+                    htmlFor="profileNameInput"
+                    className="block text-xs font-semibold text-[#17465A] mb-1"
+                  >
+                    Display Name
+                  </label>
+                  <input
+                    id="profileNameInput"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    maxLength={120}
+                    placeholder="Enter your name (e.g. MD KIRON MONDAL)"
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm text-[#0F2937]"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="profileBioInput"
+                    className="block text-xs font-semibold text-[#17465A] mb-1"
+                  >
+                    Bio
+                  </label>
+                  <textarea
+                    id="profileBioInput"
+                    value={bioInput}
+                    onChange={(e) => setBioInput(e.target.value)}
+                    rows={3}
+                    placeholder="Write your bio here..."
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBE5DC] text-sm text-[#0F2937]"
+                  />
+                </div>
                 <div className="flex gap-2">
                   <button
                     type="submit"
                     disabled={isBusy}
                     className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#059669] to-[#0284C7] text-white text-xs font-semibold cursor-pointer disabled:opacity-60"
                   >
-                    Save Bio
+                    Save Name &amp; Bio
                   </button>
                   {state.bio && (
                     <button

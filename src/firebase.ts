@@ -25,6 +25,7 @@ import {
   ApkItem,
   CommentItem,
   DEFAULT_BASE_LIKES,
+  DEFAULT_DISPLAY_NAME,
   DEFAULT_SOCIALS,
   LikeCollectionName,
   LikeInfo,
@@ -541,6 +542,7 @@ async function requireAuthProof(scope: string): Promise<string> {
 }
 
 export interface PublicSiteProfile {
+  name: string;
   avatar: string;
   bio: string;
   socials: SocialLinks;
@@ -557,6 +559,10 @@ export function subscribePublicSiteProfile(
       if (!snap.exists()) return;
       const d = snap.data();
       onData({
+        name:
+          typeof d.name === 'string' && d.name.trim()
+            ? d.name.trim()
+            : DEFAULT_DISPLAY_NAME,
         avatar: typeof d.avatar === 'string' ? d.avatar : 'profile.jpg',
         bio: typeof d.bio === 'string' ? d.bio : '',
         socials: {
@@ -612,6 +618,8 @@ export async function savePublicSiteProfile(
   try {
     const authProof = await requireAuthProof('public');
     await setDoc(doc(db, 'site', 'public'), {
+      name:
+        (profile.name || '').trim().slice(0, 120) || DEFAULT_DISPLAY_NAME,
       avatar: (profile.avatar || '').slice(0, 450000),
       bio: (profile.bio || '').slice(0, 2000),
       socials: {
